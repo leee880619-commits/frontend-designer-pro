@@ -2,6 +2,9 @@
 
 > **전문가-프론트엔드 디자이너** — `/frontend-designer-pro` 한 번으로, 코드를 몰라도 사람이 의도적으로 다듬은 수준의 프론트엔드 결과물을 받습니다.
 
+> 📖 **웹 설명서(한 페이지)** — **<https://leee880619-commits.github.io/frontend-designer-pro/>**
+> 설치·사용법·결과물·6인 전문가 점검을 그림과 함께 한눈에 봅니다. (한국어 / English 토글, 더블클릭으로도 열리는 단일 파일 · 소스: [`site/index.html`](./site/index.html))
+
 ---
 
 ## 무엇을 하나요
