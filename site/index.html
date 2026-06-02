@@ -1,0 +1,642 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>frontend-designer-pro — 전문가-프론트엔드 디자이너</title>
+<meta name="description" content="/frontend-designer-pro 한 번으로, 코드를 몰라도 전문가가 의도적으로 다듬은 수준의 프론트엔드 결과물(웹앱·분석 보고서·임원 보고서·발표 덱)을 폴더째 받는 Claude Code 플러그인.">
+<meta name="color-scheme" content="light dark">
+<meta property="og:title" content="frontend-designer-pro — 전문가-프론트엔드 디자이너">
+<meta property="og:description" content="코드를 몰라도, 전문가가 다듬은 프론트엔드. /frontend-designer-pro 한 번으로 완성된 결과물을 폴더째.">
+<meta property="og:type" content="website">
+<style>
+/* =========================================================================
+   frontend-designer-pro · landing page
+   무빌드(no-build) 단일 파일 · 외부 요청 0 · 더블클릭으로 열림
+   색은 OKLCH 우선 + hex 폴백(@supports). 본문/UI 색은 APCA AND WCAG 이중
+   게이트를 측정 통과한 값(docs/03-landing-art-brief.md §3).
+   ========================================================================= */
+
+/* --- reference 토큰: hex 폴백(구형 브라우저) --- */
+:root{
+  --color-ink-900:#1a1f29; --color-ink-700:#484d58; --color-ink-500:#6d727b;
+  --color-paper-0:#ffffff; --color-paper-50:#f9fafd; --color-paper-100:#f1f3f8;
+  --color-line-200:#e2e5e9;
+  --color-brand-50:#ebf2ff; --color-brand-500:#4c75d2; --color-brand-600:#325cbd; --color-brand-700:#21459d;
+  --color-link:#21459d; --color-coral-500:#d45b3d;
+
+  --space-1:4px; --space-2:8px; --space-3:12px; --space-4:16px; --space-5:24px;
+  --space-6:32px; --space-7:48px; --space-8:64px; --space-9:96px;
+  --radius-sm:8px; --radius-md:12px; --radius-lg:18px; --radius-pill:999px;
+  --shadow-sm:0 1px 2px rgba(20,30,60,.06), 0 1px 1px rgba(20,30,60,.04);
+  --shadow-md:0 6px 22px rgba(20,30,60,.10), 0 2px 6px rgba(20,30,60,.06);
+  --line-tight:1.18; --line-base:1.65;
+  --font-sans:"Pretendard Variable", Pretendard, -apple-system, system-ui, "Segoe UI", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+  --font-mono:ui-monospace, "SFMono-Regular", "JetBrains Mono", "D2Coding", Menlo, Consolas, monospace;
+
+  /* a11y 1급 7키 (경량 모드에서도 필수) */
+  --focus-ring-color: var(--color-brand-500);
+  --focus-ring-width:2px;
+  --focus-ring-offset:2px;
+  --motion-duration-fast:120ms;
+  --motion-duration-base:200ms;
+  --motion-reduce:1;
+  --target-size-min:24px;
+}
+/* --- OKLCH 향상(지원 브라우저에서 폴백을 덮어씀) --- */
+@supports (color: oklch(0.5 0.1 264)){
+  :root{
+    --color-ink-900:oklch(0.24 0.02 264); --color-ink-700:oklch(0.42 0.02 264); --color-ink-500:oklch(0.55 0.015 264);
+    --color-paper-50:oklch(0.985 0.004 264); --color-paper-100:oklch(0.965 0.006 264);
+    --color-line-200:oklch(0.92 0.006 264);
+    --color-brand-50:oklch(0.96 0.02 264); --color-brand-500:oklch(0.58 0.15 264);
+    --color-brand-600:oklch(0.50 0.16 264); --color-brand-700:oklch(0.42 0.15 264);
+    --color-link:oklch(0.42 0.15 264); --color-coral-500:oklch(0.62 0.16 35);
+  }
+}
+
+/* --- semantic 토큰(역할) — 반드시 var()로만 --- */
+:root{
+  --text-body:var(--color-ink-900);
+  --text-secondary:var(--color-ink-700);
+  --text-muted:var(--color-ink-500);
+  --text-on-brand:var(--color-paper-0);
+  --text-link:var(--color-link);
+  --bg-page:var(--color-paper-50);
+  --bg-raised:var(--color-paper-0);
+  --bg-band:var(--color-paper-100);
+  --bg-tint:var(--color-brand-50);
+  --border-hair:var(--color-line-200);
+  --accent:var(--color-brand-500);
+  --accent-strong:var(--color-brand-600);
+  --accent-hover:var(--color-brand-700);
+  --accent-warm:var(--color-coral-500);
+}
+
+/* --- 다크: reference 계층만 스왑(semantic 불변) --- */
+@media (prefers-color-scheme: dark){
+  :root{
+    --color-ink-900:#e4e8ef; --color-ink-700:#b3b7bf; --color-ink-500:#a1a5ac;
+    --color-paper-0:#1d2027; --color-paper-50:#13161c; --color-paper-100:#252930;
+    --color-line-200:#35383e; --color-brand-50:#232a3a; --color-link:#bdd8ff; --color-coral-500:#e0795f;
+    --shadow-sm:0 1px 2px rgba(0,0,0,.5); --shadow-md:0 6px 22px rgba(0,0,0,.55), 0 2px 6px rgba(0,0,0,.4);
+  }
+  @supports (color: oklch(0.5 0.1 264)){
+    :root{
+      --color-ink-900:oklch(0.93 0.01 264); --color-ink-700:oklch(0.78 0.012 264); --color-ink-500:oklch(0.72 0.012 264);
+      --color-paper-0:oklch(0.245 0.014 264); --color-paper-50:oklch(0.20 0.012 264); --color-paper-100:oklch(0.28 0.014 264);
+      --color-line-200:oklch(0.34 0.012 264); --color-brand-50:oklch(0.30 0.03 264);
+      --color-link:oklch(0.88 0.08 264); --color-coral-500:oklch(0.70 0.15 35);
+    }
+  }
+}
+
+/* --- 리셋 / 기본 --- */
+*,*::before,*::after{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0; background:var(--bg-page); color:var(--text-body);
+  font-family:var(--font-sans); font-size:17px; line-height:var(--line-base);
+  word-break:keep-all; -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
+}
+html[lang="en"] body{word-break:normal}
+img,svg{max-width:100%;display:block}
+a{color:var(--text-link)}
+h1,h2,h3{line-height:var(--line-tight); letter-spacing:-0.01em; margin:0}
+p{margin:0}
+:focus-visible{outline:var(--focus-ring-width) solid var(--focus-ring-color); outline-offset:var(--focus-ring-offset); border-radius:4px}
+:focus:not(:focus-visible){outline:none}
+
+.wrap{width:min(1080px, 100% - var(--space-5)); margin-inline:auto}
+.eyebrow{
+  font-family:var(--font-mono); font-size:12.5px; letter-spacing:0.16em; text-transform:uppercase;
+  color:var(--text-secondary); margin:0 0 var(--space-3); display:flex; align-items:center; gap:var(--space-2);
+}
+.eyebrow::before{content:""; width:22px; height:3px; border-radius:2px; background:var(--accent-warm)}
+.section{padding:var(--space-9) 0}
+.section + .section{border-top:1px solid var(--border-hair)}
+.section__head{max-width:46ch; margin-bottom:var(--space-7)}
+.section__head h2{font-size:clamp(26px, 4.2vw, 38px)}
+.section__head p{margin-top:var(--space-3); color:var(--text-secondary); font-size:18px}
+
+/* --- skip link --- */
+.skip{
+  position:absolute; left:var(--space-4); top:-100px; z-index:100;
+  background:var(--accent-strong); color:var(--text-on-brand); padding:10px 16px;
+  border-radius:var(--radius-sm); font-weight:600; transition:top var(--motion-duration-fast) ease;
+}
+.skip:focus{top:var(--space-4)}
+
+/* --- header --- */
+.site-header{
+  position:sticky; top:0; z-index:50; background:color-mix(in srgb, var(--bg-page) 86%, transparent);
+  -webkit-backdrop-filter:saturate(1.4) blur(10px); backdrop-filter:saturate(1.4) blur(10px);
+  border-bottom:1px solid var(--border-hair);
+}
+@supports not (backdrop-filter: blur(2px)){ .site-header{background:var(--bg-page)} }
+.nav{display:flex; align-items:center; gap:var(--space-4); height:60px}
+.brand{font-family:var(--font-mono); font-weight:700; font-size:15px; color:var(--text-body); text-decoration:none; letter-spacing:-0.01em; white-space:nowrap}
+.brand b{color:var(--accent-strong)}
+.nav__links{display:none; gap:var(--space-5); margin-left:var(--space-4)}
+.nav__links a{color:var(--text-secondary); text-decoration:none; font-size:15px; font-weight:500; padding:6px 2px}
+.nav__links a:hover{color:var(--text-body)}
+.nav__spacer{flex:1}
+.nav__right{display:flex; align-items:center; gap:var(--space-3)}
+
+/* language toggle */
+.langtoggle{display:inline-flex; background:var(--bg-band); border:1px solid var(--border-hair); border-radius:var(--radius-pill); padding:3px}
+.langtoggle button{
+  font:inherit; font-size:13px; font-weight:600; border:0; background:transparent; color:var(--text-secondary);
+  padding:5px 12px; min-height:var(--target-size-min); border-radius:var(--radius-pill); cursor:pointer; line-height:1;
+}
+.langtoggle button[aria-pressed="true"]{background:var(--bg-raised); color:var(--text-body); box-shadow:var(--shadow-sm)}
+
+.btn{
+  display:inline-flex; align-items:center; justify-content:center; gap:var(--space-2);
+  min-height:44px; padding:0 var(--space-5); border-radius:var(--radius-md); font:inherit; font-weight:600;
+  text-decoration:none; cursor:pointer; border:1px solid transparent; white-space:nowrap;
+}
+@media (prefers-reduced-motion: no-preference){ .btn{transition:transform var(--motion-duration-base) ease, background-color var(--motion-duration-fast) ease} }
+.btn--primary{background:var(--accent-strong); color:var(--text-on-brand)}
+.btn--primary:hover{background:var(--accent-hover); transform:translateY(-1px)}
+.btn--ghost{background:var(--bg-raised); color:var(--text-body); border-color:var(--border-hair)}
+.btn--ghost:hover{border-color:var(--accent); transform:translateY(-1px)}
+.btn--sm{min-height:var(--target-size-min); padding:0 var(--space-3); font-size:13px; border-radius:var(--radius-sm)}
+
+/* --- hero --- */
+.hero{position:relative; overflow:hidden; padding:var(--space-9) 0 var(--space-8)}
+.hero::before{ /* 장식면(no-text): 은은한 코너 글로우 — 제네릭 보라 그라데이션 회피 */
+  content:""; position:absolute; inset:0; pointer-events:none; z-index:0;
+  background:
+    radial-gradient(60% 55% at 88% -8%, color-mix(in srgb, var(--accent) 14%, transparent), transparent 70%),
+    radial-gradient(48% 50% at -6% 8%, color-mix(in srgb, var(--accent-warm) 9%, transparent), transparent 72%);
+}
+.hero__grid{position:relative; z-index:1; display:grid; gap:var(--space-7); grid-template-columns:1fr}
+.hero h1{font-size:clamp(34px, 7vw, 60px); letter-spacing:-0.025em; max-width:16ch}
+.hero h1 .hl{color:var(--accent-strong)}
+.hero__deck{margin-top:var(--space-5); font-size:clamp(17px, 2.4vw, 21px); color:var(--text-secondary); max-width:48ch}
+.hero__cta{margin-top:var(--space-6); display:flex; flex-wrap:wrap; gap:var(--space-3)}
+.hero__note{margin-top:var(--space-4); font-size:14px; color:var(--text-muted)}
+
+/* install / code card */
+.codecard{background:var(--bg-raised); border:1px solid var(--border-hair); border-radius:var(--radius-lg); box-shadow:var(--shadow-md); overflow:hidden}
+.codecard__bar{display:flex; align-items:center; gap:var(--space-2); padding:var(--space-3) var(--space-4); border-bottom:1px solid var(--border-hair); background:var(--bg-band)}
+.codecard__bar .label{font-family:var(--font-mono); font-size:12px; color:var(--text-secondary); letter-spacing:.04em}
+.codecard__body{padding:var(--space-4)}
+.cmd{display:flex; align-items:flex-start; gap:var(--space-3); margin:0}
+.cmd + .cmd{margin-top:var(--space-2)}
+.cmd code{font-family:var(--font-mono); font-size:13.5px; color:var(--text-body); line-height:1.5; word-break:break-all; flex:1}
+.cmd .prompt{color:var(--accent); font-family:var(--font-mono); font-size:13.5px; user-select:none}
+.copybtn{margin-left:auto}
+.copy-status{font-size:13px; color:var(--accent-strong); font-weight:600; margin-top:var(--space-3); min-height:1.2em}
+
+/* --- output types (비대칭: featured + 리스트, 균등 카드 회피) --- */
+.outputs{display:grid; gap:var(--space-5); grid-template-columns:1fr}
+.otype{background:var(--bg-raised); border:1px solid var(--border-hair); border-radius:var(--radius-lg); padding:var(--space-5); box-shadow:var(--shadow-sm)}
+.otype--feature{background:var(--bg-tint); border-color:transparent}
+.otype__tag{font-family:var(--font-mono); font-size:12px; letter-spacing:.08em; color:var(--accent-strong); text-transform:uppercase}
+.otype h3{font-size:20px; margin-top:var(--space-2)}
+.otype--feature h3{font-size:24px}
+.otype p{margin-top:var(--space-2); color:var(--text-secondary); font-size:15.5px}
+
+/* --- experts (lens rail: 균등카드 아님 — 번호 리스트 + 게이트 featured) --- */
+.lenses{display:grid; gap:var(--space-3)}
+.lens{display:grid; grid-template-columns:auto 1fr; gap:var(--space-4); align-items:baseline; padding:var(--space-4) var(--space-2); border-bottom:1px solid var(--border-hair)}
+.lens__no{font-family:var(--font-mono); font-size:13px; color:var(--accent); font-weight:600}
+.lens h3{font-size:17px}
+.lens p{color:var(--text-secondary); font-size:15px; margin-top:2px}
+.gatecard{margin-top:var(--space-6); background:var(--bg-raised); border:1px solid var(--border-hair); border-left:4px solid var(--accent); border-radius:var(--radius-md); padding:var(--space-5); box-shadow:var(--shadow-sm)}
+.gatecard h3{font-size:18px}
+.gatecard p{margin-top:var(--space-2); color:var(--text-secondary)}
+.signals{display:flex; flex-wrap:wrap; gap:var(--space-3); margin-top:var(--space-4); padding:0; list-style:none}
+.signal{display:flex; align-items:center; gap:var(--space-2); background:var(--bg-band); border-radius:var(--radius-pill); padding:6px 14px; font-size:14px; font-weight:500}
+.signal .dot{width:11px; height:11px; border-radius:50%; flex:none}
+.dot--g{background:#1f9d57} .dot--y{background:#c98a00} .dot--r{background:#c0392b}
+@supports (color: oklch(0.5 0.1 264)){ .dot--g{background:oklch(0.62 0.15 150)} .dot--y{background:oklch(0.72 0.15 75)} .dot--r{background:oklch(0.55 0.18 25)} }
+
+/* --- flow steps --- */
+.steps{display:grid; gap:0; counter-reset:step; max-width:60ch}
+.step{position:relative; display:grid; grid-template-columns:auto 1fr; gap:var(--space-4); padding:var(--space-5) 0; border-bottom:1px solid var(--border-hair)}
+.step:last-child{border-bottom:0}
+.step__num{counter-increment:step; width:38px; height:38px; flex:none; border-radius:50%; background:var(--bg-tint); color:var(--accent-strong); font-weight:700; font-family:var(--font-mono); display:grid; place-items:center; font-size:16px}
+.step__num::before{content:counter(step)}
+.step h3{font-size:18px}
+.step p{margin-top:var(--space-2); color:var(--text-secondary); font-size:15.5px}
+
+/* --- file tree --- */
+.split{display:grid; gap:var(--space-6); grid-template-columns:1fr}
+.tree{background:var(--bg-raised); border:1px solid var(--border-hair); border-radius:var(--radius-lg); padding:var(--space-5); box-shadow:var(--shadow-sm); overflow-x:auto}
+.tree pre{margin:0; font-family:var(--font-mono); font-size:13px; line-height:1.85; color:var(--text-secondary)}
+.tree .f{color:var(--text-body); font-weight:600}
+.tree .c{color:var(--text-muted)}
+.points{display:grid; gap:var(--space-4); align-content:start}
+.point{padding-left:var(--space-5); border-left:3px solid var(--accent); }
+.point h3{font-size:16px}
+.point p{color:var(--text-secondary); font-size:15px; margin-top:2px}
+
+/* --- self-contained band --- */
+.band{background:var(--bg-band)}
+.feats{display:grid; gap:var(--space-5); grid-template-columns:1fr}
+.feat h3{font-size:17px; display:flex; align-items:center; gap:var(--space-2)}
+.feat h3::before{content:""; width:8px; height:8px; border-radius:2px; background:var(--accent); flex:none}
+.feat p{color:var(--text-secondary); font-size:15px; margin-top:var(--space-2)}
+
+/* --- FAQ --- */
+.faq{max-width:64ch}
+.faq details{border-bottom:1px solid var(--border-hair); padding:var(--space-4) 0}
+.faq summary{cursor:pointer; font-weight:600; font-size:17px; list-style:none; display:flex; justify-content:space-between; align-items:center; gap:var(--space-4)}
+.faq summary::-webkit-details-marker{display:none}
+.faq summary::after{content:"+"; font-family:var(--font-mono); color:var(--accent); font-size:22px; line-height:1; flex:none}
+.faq details[open] summary::after{content:"–"}
+.faq summary:focus-visible{outline:var(--focus-ring-width) solid var(--focus-ring-color); outline-offset:var(--focus-ring-offset)}
+.faq p{margin-top:var(--space-3); color:var(--text-secondary); font-size:15.5px}
+
+/* --- footer --- */
+.site-footer{border-top:1px solid var(--border-hair); padding:var(--space-7) 0; background:var(--bg-raised)}
+.foot{display:flex; flex-wrap:wrap; gap:var(--space-5); align-items:center; justify-content:space-between}
+.foot a{color:var(--text-secondary); text-decoration:none; font-size:14px; font-weight:500}
+.foot a:hover{color:var(--text-body)}
+.foot__links{display:flex; flex-wrap:wrap; gap:var(--space-5)}
+.foot small{display:block; color:var(--text-muted); font-size:13px; margin-top:var(--space-4); line-height:1.7}
+
+/* --- reveal (JS·모션 허용 시에만) --- */
+@media (prefers-reduced-motion: no-preference){
+  html.has-js .reveal{opacity:0; transform:translateY(14px); transition:opacity var(--motion-duration-base) ease, transform var(--motion-duration-base) ease}
+  html.has-js .reveal.is-visible{opacity:1; transform:none}
+}
+
+/* --- 반응형 --- */
+@media (min-width:720px){
+  .hero__grid{grid-template-columns:1.15fr 0.85fr; align-items:center}
+  .outputs{grid-template-columns:1fr 1fr}
+  .otype--feature{grid-column:1 / -1; display:grid; grid-template-columns:1fr 1fr; gap:var(--space-5); align-items:center}
+  .feats{grid-template-columns:1fr 1fr 1fr}
+  .split{grid-template-columns:1.1fr 0.9fr; align-items:start}
+  .nav__links{display:flex}
+}
+@media (min-width:980px){
+  .lenses{grid-template-columns:1fr 1fr; column-gap:var(--space-7)}
+}
+
+/* --- print(랜딩은 필수 아님 — 기본 정리만) --- */
+@media print{
+  .site-header,.hero::before,.copybtn,.langtoggle,.hero__cta{display:none !important}
+  body{background:#fff; color:#000; font-size:12pt}
+  .section{padding:18px 0; border-color:#ccc}
+  a{color:#000; text-decoration:underline}
+}
+</style>
+</head>
+<body>
+<a class="skip" href="#main" data-en="Skip to content">본문으로 건너뛰기</a>
+
+<header class="site-header">
+  <div class="wrap nav">
+    <a class="brand" href="#top">frontend-<b>designer</b>-pro</a>
+    <nav class="nav__links" aria-label="섹션" data-en-aria="Sections">
+      <a href="#what" data-en="What">무엇을</a>
+      <a href="#why" data-en="Why pro">왜 전문가급</a>
+      <a href="#install" data-en="Install">설치</a>
+      <a href="#how" data-en="How">사용법</a>
+      <a href="#output" data-en="Output">결과물</a>
+      <a href="#faq">FAQ</a>
+    </nav>
+    <span class="nav__spacer"></span>
+    <div class="nav__right">
+      <div class="langtoggle" role="group" aria-label="언어 선택 / Language" data-en-aria="Language">
+        <button type="button" id="lang-ko" aria-pressed="true">한국어</button>
+        <button type="button" id="lang-en" aria-pressed="false">English</button>
+      </div>
+      <a class="btn btn--ghost btn--sm" href="https://github.com/leee880619-commits/frontend-designer-pro" rel="noopener">GitHub</a>
+    </div>
+  </div>
+</header>
+
+<main id="main">
+  <span id="top"></span>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="wrap hero__grid">
+      <div>
+        <p class="eyebrow" data-en="Claude Code plugin">Claude Code 플러그인</p>
+        <h1 data-en="Expert-crafted frontend — <span class='hl'>even if you don't code.</span>">코드를 몰라도, <span class="hl">전문가가 다듬은 프론트엔드.</span></h1>
+        <p class="hero__deck">
+          <span data-en="Answer a few questions and">질문 몇 개에 답하면</span>
+          <code>/frontend-designer-pro</code>
+          <span data-en="hands you a finished result you just double-click to open — a whole folder of it. Color contrast, font pairing, chart honesty, and color-blind care are all handled backstage, automatically.">한 번이면 그냥 열리는(더블클릭) 완성된 결과물을 폴더째 만들어 드립니다. 색 대비·글꼴 짝·차트 정직성·색맹 배려까지 화면 뒤에서 자동으로 챙깁니다.</span>
+        </p>
+        <div class="hero__cta">
+          <a class="btn btn--primary" href="#install" data-en="See how to install">설치 방법 보기</a>
+          <a class="btn btn--ghost" href="https://github.com/leee880619-commits/frontend-designer-pro" rel="noopener" data-en="View on GitHub">GitHub에서 보기</a>
+        </div>
+        <p class="hero__note" data-en="No terminal, no server, no build step. Works offline by double-click.">터미널·서버·빌드 과정이 전혀 필요 없습니다. 오프라인에서도 더블클릭으로 열립니다.</p>
+      </div>
+      <div class="reveal">
+        <div class="codecard" aria-label="설치 명령" data-en-aria="Install commands">
+          <div class="codecard__bar">
+            <span class="dot dot--r" aria-hidden="true"></span><span class="dot dot--y" aria-hidden="true"></span><span class="dot dot--g" aria-hidden="true"></span>
+            <span class="label">Claude Code</span>
+            <button type="button" class="btn btn--ghost btn--sm copybtn" id="copyBtn" data-copy="/plugin marketplace add https://github.com/leee880619-commits/frontend-designer-pro&#10;/plugin install frontend-designer-pro" data-en="Copy">복사</button>
+          </div>
+          <div class="codecard__body">
+            <p class="cmd"><span class="prompt">&gt;</span> <code>/plugin marketplace add https://github.com/leee880619-commits/frontend-designer-pro</code></p>
+            <p class="cmd"><span class="prompt">&gt;</span> <code>/plugin install frontend-designer-pro</code></p>
+            <p class="copy-status" id="copyStatus" role="status" aria-live="polite"></p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- WHAT -->
+  <section class="section" id="what">
+    <div class="wrap">
+      <div class="section__head reveal">
+        <p class="eyebrow" data-en="What it makes">무엇을 만드나요</p>
+        <h2 data-en="One command, five kinds of finished work.">명령 하나로, 다섯 종류의 완성된 결과물.</h2>
+        <p data-en="Answer a few multiple-choice questions and a complete, ready-to-open folder comes back. No blank canvas, no jargon.">질문 몇 개에 답하면 바로 열리는 완성 폴더가 돌아옵니다. 백지도, 어려운 용어도 없습니다.</p>
+      </div>
+      <div class="outputs reveal">
+        <article class="otype otype--feature">
+          <div>
+            <p class="otype__tag" data-en="Web app">웹앱</p>
+            <h3 data-en="Screens people actually use">사람들이 실제로 쓰는 화면</h3>
+          </div>
+          <p data-en="Pages people click and type into. Buttons respond, forms get processed — with every state (loading, empty, error) handled.">사람들이 클릭하고 입력하며 실제로 '쓰는' 화면. 버튼은 반응하고 폼은 처리되며, 로딩·빈 화면·오류까지 빠짐없이 챙깁니다.</p>
+        </article>
+        <article class="otype">
+          <p class="otype__tag" data-en="Analysis report">공유용 분석 보고서</p>
+          <h3 data-en="Read by many colleagues">여러 동료가 읽는 문서</h3>
+          <p data-en="Charts and tables that state the conclusion clearly, so everyone follows the data the same way.">차트와 표가 결론을 또렷이 말해, 여러 사람이 헷갈림 없이 데이터를 따라옵니다.</p>
+        </article>
+        <article class="otype">
+          <p class="otype__tag" data-en="Executive report">C레벨·임원 보고서</p>
+          <h3 data-en="For people who decide">결정을 내리는 분들께</h3>
+          <p data-en="Brief enough to judge fast. Trust and clarity over flashiness.">짧게 보고 판단하는 자료. 화려함보다 '믿을 만한 인상'과 또렷한 핵심.</p>
+        </article>
+        <article class="otype">
+          <p class="otype__tag" data-en="Presentation deck">발표 덱 (HTML 슬라이드)</p>
+          <h3 data-en="Readable from the back row">뒷자리에서도 읽히게</h3>
+          <p data-en="Shown on a meeting-room screen and narrated. One message per slide, readable from the back.">회의실 화면에 띄워 말로 설명하는 자료. 한 장에 메시지 하나, 뒷자리에서도 읽힙니다.</p>
+        </article>
+        <article class="otype">
+          <p class="otype__tag" data-en="Other">기타 (랜딩·마케팅 등)</p>
+          <h3 data-en="Doesn't fit the four?">위 넷에 안 맞으면?</h3>
+          <p data-en="One more question pins down what you want and routes to the best-fitting approach.">한 번 더 여쭤, 가장 잘 맞는 방식을 찾아드립니다.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- WHY PRO -->
+  <section class="section" id="why">
+    <div class="wrap">
+      <div class="section__head reveal">
+        <p class="eyebrow" data-en="Why &quot;pro&quot;">왜 "전문가급"인가요</p>
+        <h2 data-en="Six experts run behind the screen — in order.">화면 뒤에서 6명의 전문가가 순서대로 일합니다.</h2>
+        <p data-en="You see pictures, plain words, and traffic-light badges. The machinery stays backstage.">당신에게는 그림·쉬운 말·신호등 배지만 보입니다. 복잡한 장치는 무대 뒤에서만 돕니다.</p>
+      </div>
+      <div class="lenses reveal">
+        <div class="lens"><span class="lens__no">01</span><div><h3 data-en="Art director">아트디렉터</h3><p data-en="Sets one clear direction — mood, hierarchy, and what NOT to do.">무드·위계와 '하지 말 것'을 정해 방향을 하나로 잡습니다.</p></div></div>
+        <div class="lens"><span class="lens__no">02</span><div><h3 data-en="Design-system architect">디자인시스템 설계자</h3><p data-en="Builds a &quot;change one place, the whole thing changes&quot; color &amp; font structure.">'한 곳만 바꾸면 전체가 바뀌는' 색·글꼴 구조를 만듭니다.</p></div></div>
+        <div class="lens"><span class="lens__no">03</span><div><h3 data-en="Color scientist">색채과학자</h3><p data-en="Derives every shade so text stays legible — measured, not guessed.">모든 색을 '잘 읽히도록' 계산해 뽑습니다 — 추측이 아니라 측정으로.</p></div></div>
+        <div class="lens"><span class="lens__no">04</span><div><h3 data-en="Accessibility &amp; UX lead">접근성·사용성 리드</h3><p data-en="Keyboard, focus, screen readers, touch targets — nobody gets left out.">키보드·포커스·스크린리더·터치 크기까지, 아무도 소외되지 않게.</p></div></div>
+        <div class="lens"><span class="lens__no">05</span><div><h3 data-en="Data-viz specialist">데이터시각화 전문가</h3><p data-en="Picks the honest chart and a title that states the conclusion.">정직한 차트와 '결론을 말하는 제목'을 고릅니다.</p></div></div>
+        <div class="lens"><span class="lens__no">06</span><div><h3 data-en="Frontend implementation engineer">프론트엔드 구현 엔지니어</h3><p data-en="Makes it actually open by double-click — no build, no terminal.">빌드도 터미널도 없이 더블클릭으로 진짜 열리게 만듭니다.</p></div></div>
+      </div>
+      <div class="gatecard reveal">
+        <h3 data-en="Before export, an automatic full check — and a fix.">내보내기 전, 자동 전수 점검 — 그리고 보정.</h3>
+        <p data-en="&quot;Is it legible? Does it look auto-generated? Can a color-blind colleague tell things apart?&quot; If something falls short, it gets fixed before finishing. You never inherit the homework.">"잘 읽히는지 / AI가 바로 만든 티가 안 나는지 / 색맹 동료도 구분되는지"를 점검하고, 부족하면 알아서 고쳐 완성합니다. 당신이 숙제를 떠안지 않습니다.</p>
+        <ul class="signals">
+          <li class="signal"><span class="dot dot--g" aria-hidden="true"></span><span data-en="Clearly legible">잘 읽힘</span></li>
+          <li class="signal"><span class="dot dot--y" aria-hidden="true"></span><span data-en="Large text only">큰 글씨만 OK</span></li>
+          <li class="signal"><span class="dot dot--r" aria-hidden="true"></span><span data-en="Auto-corrected">자동으로 고쳤음</span></li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- INSTALL -->
+  <section class="section band" id="install">
+    <div class="wrap">
+      <div class="section__head reveal">
+        <p class="eyebrow" data-en="Install">설치</p>
+        <h2 data-en="Two lines inside Claude Code.">Claude Code 안에서 두 줄.</h2>
+        <p data-en="The first line registers the marketplace; the second installs the plugin. That's it.">첫 줄은 장터를 등록하고, 둘째 줄은 플러그인을 설치합니다. 그게 전부입니다.</p>
+      </div>
+      <div class="reveal" style="max-width:760px">
+        <div class="codecard">
+          <div class="codecard__bar">
+            <span class="label" data-en="Marketplace install (recommended)">마켓플레이스 설치 (권장)</span>
+            <button type="button" class="btn btn--ghost btn--sm copybtn" data-copy="/plugin marketplace add https://github.com/leee880619-commits/frontend-designer-pro&#10;/plugin install frontend-designer-pro" data-en="Copy">복사</button>
+          </div>
+          <div class="codecard__body">
+            <p class="cmd"><span class="prompt">&gt;</span> <code>/plugin marketplace add https://github.com/leee880619-commits/frontend-designer-pro</code></p>
+            <p class="cmd"><span class="prompt">&gt;</span> <code>/plugin install frontend-designer-pro</code></p>
+          </div>
+        </div>
+        <p class="hero__note" data-en="Once installed, /frontend-designer-pro appears in the autocomplete list.">설치가 끝나면 <code>/frontend-designer-pro</code>가 자동완성 목록에 나타납니다.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW -->
+  <section class="section" id="how">
+    <div class="wrap">
+      <div class="section__head reveal">
+        <p class="eyebrow" data-en="How it works">사용법</p>
+        <h2 data-en="One flow, from question to finished folder.">질문부터 완성 폴더까지, 한 흐름.</h2>
+        <p data-en="It runs in one screen flow. Stop midway and pick up later — your decisions are remembered.">한 화면 흐름으로 진행되고, 중간에 멈춰도 다음에 이어서 시작할 수 있습니다.</p>
+      </div>
+      <div class="steps reveal">
+        <div class="step"><span class="step__num" aria-hidden="true"></span><div>
+          <h3 data-en="Call it">호출</h3>
+          <p data-en="Type /frontend-designer-pro, or just say &quot;make me an executive report.&quot; Attach a file (md/html) and it reads it first to ask fewer questions."><code>/frontend-designer-pro</code> 입력, 또는 "임원 보고서 만들어줘"처럼 자연어로. 첨부 파일(md·html)이 있으면 먼저 읽어 질문 수를 줄입니다.</p></div></div>
+        <div class="step"><span class="step__num" aria-hidden="true"></span><div>
+          <h3 data-en="Answer the questions">질문에 답하기</h3>
+          <p data-en="Just once, only what matters — as pictures and multiple choice. A ★recommended default is pre-selected, so picking &quot;you decide&quot; (or nothing) still yields top quality.">딱 한 번, 꼭 필요한 것만 그림과 객관식으로. ★추천 기본값이 켜져 있어 "알아서 해주세요"를 골라도, 안 골라도 최고 품질이 나옵니다.</p></div></div>
+        <div class="step"><span class="step__num" aria-hidden="true"></span><div>
+          <h3 data-en="(Optional) Compare samples">(선택) 샘플 비교</h3>
+          <p data-en="Want to compare three different moods side by side? Pick the one you like. Skippable.">서로 다른 분위기 시안 3개를 나란히 비교하고 마음에 드는 하나를 고릅니다. 건너뛰어도 됩니다.</p></div></div>
+        <div class="step"><span class="step__num" aria-hidden="true"></span><div>
+          <h3 data-en="Save the result folder">결과 폴더 저장</h3>
+          <p data-en="Saved where you chose, with human-readable names. Double-click index.html and it opens in the browser. No terminal, server, or build.">답한 위치에 사람이 알아볼 이름으로 저장됩니다. <code>index.html</code>을 더블클릭하면 브라우저에서 바로 열립니다. 터미널·서버·빌드 불필요.</p></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- OUTPUT -->
+  <section class="section band" id="output">
+    <div class="wrap">
+      <div class="section__head reveal">
+        <p class="eyebrow" data-en="The result folder">결과물 폴더</p>
+        <h2 data-en="Human-readable names. No build leftovers.">사람이 알아볼 이름. 빌드 찌꺼기 없음.</h2>
+        <p data-en="No dist/ or .next/ clutter — just files you can recognize and edit.">dist/·.next/ 같은 빌드 찌꺼기 대신, 알아보고 고칠 수 있는 파일만.</p>
+      </div>
+      <div class="split reveal">
+        <div class="tree">
+<pre>내-결과물/
+  <span class="f">index.html</span>        <span class="c"><span data-en="open this — double-click">← 여기를 더블클릭하면 열립니다</span></span>
+  <span class="f">tokens.css</span>        <span class="c"><span data-en="colors &amp; fonts in one place">← 색·글꼴이 한곳에</span></span>
+  assets/           <span class="c"><span data-en="fonts, images">← 폰트·이미지</span></span>
+  samples/          <span class="c"><span data-en="(optional) compared drafts">← (선택) 비교한 시안들</span></span>
+  <span class="f"><span data-en="editing-guide.md">편집-가이드.md</span></span>     <span class="c"><span data-en="&quot;change this number&quot;">← "이 숫자를 바꾸세요"</span></span>
+  <span class="f"><span data-en="check-summary.md">검증-요약.md</span></span>      <span class="c"><span data-en="auto-check results">← 자동 점검 결과</span></span>
+  a11y-report.md    <span class="c"><span data-en="legibility report">← 잘 읽히는지 점검</span></span></pre>
+        </div>
+        <div class="points">
+          <div class="point"><h3 data-en="No terminal needed">터미널을 몰라도 됩니다</h3><p data-en="Open index.html from the file explorer by double-click.">파일 탐색기에서 <code>index.html</code>을 더블클릭하면 열립니다.</p></div>
+          <div class="point"><h3 data-en="Change one place">한 곳만 바꾸면 전체가</h3><p data-en="Edit tokens.css once to change colors or fonts everywhere. A Korean editing guide shows exactly where.">색·글꼴을 바꾸려면 <code>tokens.css</code> 한 곳만. 함께 드리는 편집 가이드가 한국어로 안내합니다.</p></div>
+          <div class="point"><h3 data-en="Reported as traffic lights">신호등으로 알려드립니다</h3><p data-en="🟢 clearly legible · 🟡 large text only · 🔴 auto-corrected — with a one-line, real-life note.">🟢 잘 읽힘 · 🟡 큰 글씨만 OK · 🔴 자동으로 고쳤음 — 실생활 한 줄과 함께.</p></div>
+          <div class="point"><h3 data-en="Fixed for you">문제가 있으면 대신 고칩니다</h3><p data-en="Faint colors or a missing image description get auto-corrected before finishing.">색이 흐리거나 그림 설명이 빠지면, 완성 전에 자동으로 보정합니다.</p></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SELF-CONTAINED -->
+  <section class="section" id="self">
+    <div class="wrap">
+      <div class="section__head reveal">
+        <p class="eyebrow" data-en="Self-contained">자기완결</p>
+        <h2 data-en="Nothing else to install. Works offline.">다른 것 안 깔아도, 오프라인에서도.</h2>
+        <p data-en="Every bit of expert knowledge is bundled inside the plugin as text, so quality doesn't depend on other skills or a network.">전문 지식을 모두 플러그인 안에 텍스트로 담아, 다른 스킬이나 네트워크에 품질이 좌우되지 않습니다.</p>
+      </div>
+      <div class="feats reveal">
+        <div class="feat"><h3 data-en="Standalone">혼자 동작</h3><p data-en="Works the same even if other design skills aren't installed — the references/ bundle is self-contained.">다른 디자인 스킬이 없어도 품질 그대로 — references/ 지식 번들이 자기완결입니다.</p></div>
+        <div class="feat"><h3 data-en="No build, double-click">무빌드 더블클릭</h3><p data-en="A single index.html with zero external requests. It opens by double-click, even on file://.">외부 요청 0인 단일 index.html. file://에서도 더블클릭으로 열립니다.</p></div>
+        <div class="feat"><h3 data-en="Korean-safe offline">한글 안전</h3><p data-en="Even if a CDN is blocked on your office network, Korean text won't break — font fallbacks are built in.">사내망에서 CDN이 막혀도 한글이 깨지지 않도록 폰트 폴백을 갖춥니다.</p></div>
+        <div class="feat"><h3 data-en="Measured, not claimed">말이 아니라 측정</h3><p data-en="Contrast, color-blindness, and tokens are checked by a double-click audit tool — used only at build time, never shipped to you.">대비·색맹·토큰을 더블클릭 점검 도구로 실측합니다 — 만들 때만 쓰고 결과물엔 넣지 않습니다.</p></div>
+        <div class="feat"><h3 data-en="Honest reporting">정직한 보고</h3><p data-en="What wasn't measured isn't claimed as measured. Cross-browser and load speed are stated only when actually tested.">측정 안 한 것은 측정한 것처럼 말하지 않습니다. 교차브라우저·로딩속도는 실측했을 때만 단정합니다.</p></div>
+        <div class="feat"><h3 data-en="MIT licensed">MIT 라이선스</h3><p data-en="Free to use, modify, and redistribute.">자유롭게 사용·수정·재배포할 수 있습니다.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section class="section band" id="faq">
+    <div class="wrap">
+      <div class="section__head reveal">
+        <p class="eyebrow">FAQ</p>
+        <h2 data-en="Questions, answered plainly.">자주 묻는 질문.</h2>
+      </div>
+      <div class="faq reveal">
+        <details open>
+          <summary data-en="Do I really not need to code?">정말 코드를 몰라도 되나요?</summary>
+          <p data-en="Right. Type /frontend-designer-pro in the chat box; open the result by double-clicking index.html. No terminal involved.">네. 채팅창에 <code>/frontend-designer-pro</code>만 입력하면 됩니다. 결과는 <code>index.html</code>을 더블클릭하면 열립니다. 터미널은 필요 없습니다.</p>
+        </details>
+        <details>
+          <summary data-en="Can I edit the result later?">결과물을 나중에 수정할 수 있나요?</summary>
+          <p data-en="Yes. Change tokens.css in one place and colors/fonts update everywhere. The included Korean editing guide tells you exactly which line to change.">네. <code>tokens.css</code> 한 곳만 바꾸면 색·글꼴이 전체에 반영됩니다. 함께 드리는 편집 가이드가 어느 줄을 바꿀지 한국어로 안내합니다.</p>
+        </details>
+        <details>
+          <summary data-en="Do I need to install another design plugin first?">다른 디자인 플러그인을 먼저 깔아야 하나요?</summary>
+          <p data-en="No. It runs completely on its own — the knowledge it needs is bundled inside.">아니요. 혼자서 완전히 동작합니다 — 필요한 지식이 안에 번들돼 있습니다.</p>
+        </details>
+        <details>
+          <summary data-en="What can it build?">무엇을 만들 수 있나요?</summary>
+          <p data-en="Web apps, analysis reports, executive reports, presentation decks — and landing/marketing pages beyond those.">웹앱·분석 보고서·임원 보고서·발표 덱, 그 외 랜딩·마케팅 페이지도 만듭니다.</p>
+        </details>
+        <details>
+          <summary data-en="Does it cost anything?">비용이 드나요?</summary>
+          <p data-en="It's MIT-licensed — free to use, modify, and redistribute.">MIT 라이선스입니다 — 자유롭게 사용·수정·재배포할 수 있습니다.</p>
+        </details>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <div class="foot">
+      <a class="brand" href="#top">frontend-<b>designer</b>-pro</a>
+      <nav class="foot__links" aria-label="바닥글" data-en-aria="Footer">
+        <a href="https://github.com/leee880619-commits/frontend-designer-pro" rel="noopener">GitHub</a>
+        <a href="https://github.com/leee880619-commits/frontend-designer-pro/blob/main/README.md" rel="noopener">README</a>
+        <a href="https://github.com/leee880619-commits/frontend-designer-pro/blob/main/LICENSE" rel="noopener" data-en="License (MIT)">라이선스 (MIT)</a>
+      </nav>
+    </div>
+    <small data-en="This page was built with the same frontend-designer-pro principles: no-build single file, zero external requests, dual contrast gate, auto dark mode. It opens by double-click.">이 페이지도 frontend-designer-pro의 원칙으로 만들었습니다: 무빌드 단일 파일, 외부 요청 0, 대비 이중 점검, 자동 다크 모드. 더블클릭으로 열립니다.</small>
+  </div>
+</footer>
+
+<script>
+/* 무빌드 인라인 스크립트 — 모두 progressive enhancement.
+   JS가 막혀도 한국어 페이지는 그대로 동작한다(기본 textContent=한국어). */
+(function(){
+  "use strict";
+  document.documentElement.classList.add("has-js");
+
+  /* ---- 언어 토글 (KO 기본, EN 전환) ---- */
+  var koBtn = document.getElementById("lang-ko");
+  var enBtn = document.getElementById("lang-en");
+  var nodes = document.querySelectorAll("[data-en]");
+  var ariaNodes = document.querySelectorAll("[data-en-aria]");
+
+  // 최초 1회: 한국어 원문을 data-ko에 캐시 (innerHTML — 일부 <span class=hl> 보존)
+  nodes.forEach(function(n){ n.setAttribute("data-ko", n.innerHTML); });
+  ariaNodes.forEach(function(n){ n.setAttribute("data-ko-aria", n.getAttribute("aria-label") || ""); });
+
+  function setLang(lang){
+    var toEn = (lang === "en");
+    nodes.forEach(function(n){
+      var v = n.getAttribute(toEn ? "data-en" : "data-ko");
+      if (v !== null) n.innerHTML = v;
+    });
+    ariaNodes.forEach(function(n){
+      var v = n.getAttribute(toEn ? "data-en-aria" : "data-ko-aria");
+      if (v !== null) n.setAttribute("aria-label", v);
+    });
+    document.documentElement.setAttribute("lang", lang);
+    document.title = toEn
+      ? "frontend-designer-pro — expert frontend designer"
+      : "frontend-designer-pro — 전문가-프론트엔드 디자이너";
+    koBtn.setAttribute("aria-pressed", String(!toEn));
+    enBtn.setAttribute("aria-pressed", String(toEn));
+  }
+  koBtn.addEventListener("click", function(){ setLang("ko"); });
+  enBtn.addEventListener("click", function(){ setLang("en"); });
+
+  /* ---- 설치 명령 복사 ---- */
+  function flash(statusEl, msg){
+    if (!statusEl) return;
+    statusEl.textContent = msg;
+    window.setTimeout(function(){ statusEl.textContent = ""; }, 2200);
+  }
+  document.querySelectorAll(".copybtn").forEach(function(btn){
+    btn.addEventListener("click", function(){
+      var text = (btn.getAttribute("data-copy") || "").replace(/&#10;/g, "\n");
+      var isEn = document.documentElement.getAttribute("lang") === "en";
+      var ok = isEn ? "Copied!" : "복사됨!";
+      var card = btn.closest(".codecard");
+      var status = card ? card.querySelector(".copy-status") : null;
+      var done = function(){ flash(status, ok); btn.textContent = isEn ? "Copied" : "복사됨"; window.setTimeout(function(){ btn.textContent = isEn ? "Copy" : "복사"; }, 2200); };
+      if (navigator.clipboard && navigator.clipboard.writeText){
+        navigator.clipboard.writeText(text).then(done, function(){ legacyCopy(text); done(); });
+      } else { legacyCopy(text); done(); }
+    });
+  });
+  function legacyCopy(text){
+    var ta = document.createElement("textarea");
+    ta.value = text; ta.setAttribute("readonly",""); ta.style.position="absolute"; ta.style.left="-9999px";
+    document.body.appendChild(ta); ta.select();
+    try { document.execCommand("copy"); } catch(e){}
+    document.body.removeChild(ta);
+  }
+
+  /* ---- 진입 리빌 (reduced-motion이면 비활성) ---- */
+  var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var reveals = document.querySelectorAll(".reveal");
+  if (reduce || !("IntersectionObserver" in window)){
+    reveals.forEach(function(el){ el.classList.add("is-visible"); });
+  } else {
+    var io = new IntersectionObserver(function(entries){
+      entries.forEach(function(e){ if (e.isIntersecting){ e.target.classList.add("is-visible"); io.unobserve(e.target); } });
+    }, { threshold: 0.12, rootMargin: "0px 0px -8% 0px" });
+    reveals.forEach(function(el){ io.observe(el); });
+  }
+})();
+</script>
+</body>
+</html>
