@@ -1,0 +1,225 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<title>시안 갤러리 — 2026 1분기 게임 서비스 분석 보고서</title>
+<meta name="description" content="서로 다른 분위기의 분석 보고서 시안 3개를 나란히 비교하는 갤러리 (예시 데이터)">
+<style>
+  /* 갤러리 자체 토큰 (중립 셸 — 각 시안 색과 섞이지 않게 독립) */
+  :root{
+    --g-ink: #20242e; --g-ink-2: #4a5160; --g-muted: #6a7180;
+    --g-bg: #f3f5f8; --g-card: #ffffff; --g-line: #dde1ea; --g-brand: #34507a;
+    --g-ok: #1f8a4c; --g-warn: #b06a00;
+    --g-space-2:.5rem; --g-space-3:1rem; --g-space-4:1.5rem; --g-space-6:3rem;
+    --g-font: "Pretendard", system-ui, -apple-system, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+    --g-radius: 12px;
+    --motion-reduce:1;
+  }
+  @supports (color: oklch(0 0 0)){
+    :root{
+      --g-ink:oklch(0.28 0.02 260); --g-ink-2:oklch(0.44 0.02 260); --g-muted:oklch(0.55 0.02 260);
+      --g-bg:oklch(0.97 0.006 255); --g-card:oklch(1 0 0); --g-line:oklch(0.90 0.01 255);
+      --g-brand:oklch(0.42 0.08 255); --g-ok:oklch(0.55 0.13 150); --g-warn:oklch(0.62 0.13 75);
+    }
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --g-ink:#e7eaf1; --g-ink-2:#b6bdcc; --g-muted:#8b93a4;
+      --g-bg:#15181f; --g-card:#1d212b; --g-line:#2d323e; --g-brand:#7a98c8;
+      --g-ok:#4cc080; --g-warn:#d79a3a;
+    }
+  }
+  @media (prefers-reduced-motion: reduce){ :root{ --motion-reduce:0; } }
+
+  *,*::before,*::after{box-sizing:border-box}
+  *{margin:0}
+  body{background:var(--g-bg); color:var(--g-ink); font-family:var(--g-font);
+    line-height:1.65; word-break:keep-all; letter-spacing:-0.01em; padding:var(--g-space-4)}
+  :where(p,li,dd,dt){word-break:keep-all; overflow-wrap:anywhere}
+  a{color:inherit}
+  .skip-link{position:absolute; left:.5rem; top:-3rem; z-index:20; background:var(--g-brand);
+    color:#fff; padding:.5rem 1rem; border-radius:8px; text-decoration:none;
+    transition:top calc(120ms * var(--motion-reduce, 1)) ease}
+  .skip-link:focus-visible{top:.5rem}
+  :where(a,button,[tabindex]):focus-visible{outline:2px solid var(--g-brand); outline-offset:2px; border-radius:4px}
+  .wrap{max-width:84rem; margin-inline:auto}
+
+  header.gallery{padding-block:var(--g-space-4) var(--g-space-6); max-width:60rem}
+  .kicker{font-size:.8rem; letter-spacing:.14em; text-transform:uppercase;
+    color:var(--g-brand); font-weight:700; margin-bottom:var(--g-space-3)}
+  h1{font-size:clamp(1.8rem,4.6vw,2.8rem); line-height:1.18; letter-spacing:-0.02em; font-weight:800}
+  header.gallery p{margin-top:var(--g-space-3); font-size:1.08rem; color:var(--g-ink-2); max-width:54ch}
+  .note{margin-top:var(--g-space-3); font-size:.9rem; color:var(--g-muted);
+    border-left:3px solid var(--g-line); padding-left:var(--g-space-3); max-width:60ch}
+
+  h2.sec{font-size:1.3rem; margin-bottom:var(--g-space-4); font-weight:700;
+    padding-bottom:var(--g-space-2); border-bottom:1px solid var(--g-line)}
+
+  /* 카드 그리드: 의도적으로 균등 3카드가 아니라, 카드 안에서 위계를 줌 + 가변폭 */
+  .cards{display:grid; grid-template-columns:repeat(auto-fit,minmax(min(19rem,100%),1fr)); gap:var(--g-space-4);
+    margin-bottom:var(--g-space-6)}
+  .card{background:var(--g-card); border:1px solid var(--g-line); border-radius:var(--g-radius);
+    padding:var(--g-space-4); display:flex; flex-direction:column}
+  .card h3{font-size:1.15rem; font-weight:700; line-height:1.3}
+  .card .ord{font-size:.78rem; color:var(--g-muted); font-weight:600; margin-bottom:.2rem}
+  .card .one-line{margin-top:var(--g-space-2); color:var(--g-ink-2); font-size:.95rem}
+  .meta-row{margin-top:var(--g-space-3); font-size:.88rem}
+  .meta-row dt{font-weight:600; color:var(--g-ink); margin-top:var(--g-space-2)}
+  .meta-row dd{color:var(--g-ink-2)}
+  .badges{margin-top:var(--g-space-3); display:flex; flex-wrap:wrap; gap:.4rem}
+  .badge{display:inline-flex; align-items:center; gap:.35rem; font-size:.8rem; font-weight:600;
+    padding:.3rem .6rem; border-radius:999px; border:1px solid var(--g-line); background:var(--g-bg)}
+  .badge .dot{width:.6rem; height:.6rem; border-radius:50%; flex:0 0 auto}
+  .dot.ok{background:var(--g-ok)} .dot.warn{background:var(--g-warn)}
+  .tok{margin-top:var(--g-space-3); font-size:.82rem; color:var(--g-muted)}
+  .tok .sw{display:inline-block; width:.85rem; height:.85rem; border-radius:3px;
+    vertical-align:-2px; margin-right:.3rem; border:1px solid rgba(0,0,0,.12)}
+  .card .open{margin-top:auto; padding-top:var(--g-space-3)}
+  .card .open a{display:inline-block; background:var(--g-brand); color:#fff; text-decoration:none;
+    font-weight:600; font-size:.92rem; padding:.55rem 1rem; border-radius:8px;
+    min-height:var(--target-size-min,24px)}
+  .card .open a:hover{filter:brightness(1.08)}
+
+  /* side-by-side iframe 비교 + 정적 링크 폴백(file:// 제약 대비 항상 병행) */
+  .compare{display:grid; grid-template-columns:repeat(auto-fit,minmax(min(22rem,100%),1fr)); gap:var(--g-space-4);
+    margin-bottom:var(--g-space-6)}
+  .preview{background:var(--g-card); border:1px solid var(--g-line); border-radius:var(--g-radius); overflow:hidden}
+  .preview figcaption{padding:var(--g-space-2) var(--g-space-3); font-weight:700; font-size:.95rem;
+    border-bottom:1px solid var(--g-line); display:flex; justify-content:space-between; align-items:center; gap:.5rem}
+  .preview figcaption a{font-size:.82rem; font-weight:600; color:var(--g-brand)}
+  .frame-box{position:relative; aspect-ratio:4/3; background:var(--g-bg)}
+  .frame-box iframe{width:100%; height:100%; border:0; display:block}
+  .fallback{position:absolute; inset:0; display:flex; flex-direction:column; align-items:center;
+    justify-content:center; gap:.6rem; text-align:center; padding:var(--g-space-4); color:var(--g-muted); font-size:.9rem}
+  .fallback a{font-weight:700; color:var(--g-brand); text-decoration:underline}
+  /* iframe이 로드되면 그 위에 그려져 폴백을 덮음. 로드 안 되면(file:// 차단) 폴백이 보임 */
+  .frame-box iframe{position:relative; z-index:1}
+
+  .legend{font-size:.85rem; color:var(--g-muted); margin-bottom:var(--g-space-4); max-width:60ch}
+  footer.gallery{margin-top:var(--g-space-6); padding-top:var(--g-space-4);
+    border-top:1px solid var(--g-line); font-size:.82rem; color:var(--g-muted)}
+  footer.gallery p{margin-bottom:.3rem; color:var(--g-muted)}
+
+  @media print{
+    body{background:#fff}
+    .frame-box{aspect-ratio:auto; min-height:auto}
+    iframe{display:none}
+    .fallback{position:static; display:flex}
+    .card,.preview{break-inside:avoid; border:1px solid #ccc}
+    .skip-link{display:none}
+  }
+</style>
+</head>
+<body>
+<a class="skip-link" href="#cards">시안 목록 바로가기</a>
+<div class="wrap">
+
+  <header class="gallery">
+    <p class="kicker">시안 갤러리 · 분석 보고서</p>
+    <h1>같은 보고서, 세 가지 분위기 — 마음에 드는 느낌을 골라보세요</h1>
+    <p>2026년 1분기 게임 서비스 매출·이용자 분석 보고서를 서로 다른 성격의 시안 3개로 만들었습니다. 데이터와 결론은 모두 같고, 글씨·색·배치만 다릅니다.</p>
+    <p class="note">아래 미리보기가 비어 보이면, 브라우저 보안 설정 때문일 수 있어요. 그럴 땐 각 카드의 <b>"이 시안 열기"</b> 버튼이나 미리보기 제목 옆 <b>"새 창"</b> 링크를 누르면 그대로 열립니다. 모든 수치는 검증용 예시 데이터입니다.</p>
+  </header>
+
+  <h2 class="sec" id="cards">시안 비교</h2>
+  <p class="legend">각 시안에 ①성격 ②추천 용도 ③주의점과 함께, 잘 읽히는지(대비)·키보드만으로 쓰는지·휴대폰에서 안 깨지는지를 신호등으로 표시했습니다.</p>
+
+  <div class="cards">
+
+    <!-- 시안 1: editorial -->
+    <article class="card" aria-labelledby="c1-h">
+      <p class="ord">시안 1</p>
+      <h3 id="c1-h">에디토리얼 (잡지 레이아웃 느낌)</h3>
+      <p class="one-line">큰 세리프 제목과 단정한 본문이 또렷한 위계로 흐르는, 잘 만든 잡지 기사 같은 느낌.</p>
+      <dl class="meta-row">
+        <dt>추천 용도</dt>
+        <dd>동료들이 받아 차분히 읽는 분석 보고서 · 결론과 근거가 위계로 또렷이 구분돼 신뢰감 있게 읽힙니다.</dd>
+        <dt>주의점</dt>
+        <dd>빔프로젝터 발표나 강한 마케팅 임팩트에는 덜 맞습니다(읽는 문서에 최적).</dd>
+      </dl>
+      <div class="badges" aria-label="접근성 신호등">
+        <span class="badge"><span class="dot ok"></span>잘 읽힘</span>
+        <span class="badge"><span class="dot ok"></span>키보드 OK</span>
+        <span class="badge"><span class="dot ok"></span>어디서나</span>
+      </div>
+      <p class="tok"><span class="sw" style="background:#8a3322"></span>강조색 = 벽돌색 · 본문 글씨 = Pretendard, 제목 = 세리프</p>
+      <p class="open"><a href="./sample-1-editorial/index.html">시안 1 열기 →</a></p>
+    </article>
+
+    <!-- 시안 2: soft-modern -->
+    <article class="card" aria-labelledby="c2-h">
+      <p class="ord">시안 2</p>
+      <h3 id="c2-h">소프트 모던 (부드럽고 요즘 앱 같은 느낌)</h3>
+      <p class="one-line">둥근 모서리와 부드러운 파란색·은은한 그림자로 친근하고 다루기 편한 느낌.</p>
+      <dl class="meta-row">
+        <dt>추천 용도</dt>
+        <dd>사내에서 가볍게 공유하는 현황 보고 · 친근한 카드 배치로 누구나 편하게 훑어봅니다.</dd>
+        <dt>주의점</dt>
+        <dd>극도의 격식이 필요한 이사회 보고에는 다소 가벼워 보일 수 있습니다.</dd>
+      </dl>
+      <div class="badges" aria-label="접근성 신호등">
+        <span class="badge"><span class="dot ok"></span>잘 읽힘</span>
+        <span class="badge"><span class="dot ok"></span>키보드 OK</span>
+        <span class="badge"><span class="dot ok"></span>어디서나</span>
+      </div>
+      <p class="tok"><span class="sw" style="background:#4f6fd6"></span>강조색 = 부드러운 파랑 · 본문 글씨 = Pretendard</p>
+      <p class="open"><a href="./sample-2-soft-modern/index.html">시안 2 열기 →</a></p>
+    </article>
+
+    <!-- 시안 3: technical -->
+    <article class="card" aria-labelledby="c3-h">
+      <p class="ord">시안 3</p>
+      <h3 id="c3-h">테크니컬 (또렷하고 정밀한 도구 느낌)</h3>
+      <p class="one-line">고정폭 숫자와 격자 패널로 지표를 정확하고 빈틈없이 보여주는, 관제 대시보드 같은 느낌.</p>
+      <dl class="meta-row">
+        <dt>추천 용도</dt>
+        <dd>숫자·지표가 많은 데이터 보고 · 표와 수치를 정밀하게 비교해야 하는 실무진 공유에 강합니다.</dd>
+        <dt>주의점</dt>
+        <dd>감성·설득이 필요한 자료나 정보가 적은 단순 안내에는 과하게 느껴질 수 있습니다.</dd>
+      </dl>
+      <div class="badges" aria-label="접근성 신호등">
+        <span class="badge"><span class="dot ok"></span>잘 읽힘</span>
+        <span class="badge"><span class="dot ok"></span>키보드 OK</span>
+        <span class="badge"><span class="dot ok"></span>어디서나</span>
+      </div>
+      <p class="tok"><span class="sw" style="background:#2f7fe0"></span>강조색 = 정밀 파랑 · 숫자 글씨 = 고정폭(모노)</p>
+      <p class="open"><a href="./sample-3-technical/index.html">시안 3 열기 →</a></p>
+    </article>
+
+  </div>
+
+  <h2 class="sec">나란히 미리보기</h2>
+  <div class="compare">
+    <figure class="preview">
+      <figcaption>시안 1 · 에디토리얼 <a href="./sample-1-editorial/index.html" target="_blank" rel="noopener">새 창 ↗</a></figcaption>
+      <div class="frame-box">
+        <div class="fallback">미리보기가 안 보이나요?<a href="./sample-1-editorial/index.html">시안 1 새 창으로 열기 →</a></div>
+        <iframe src="./sample-1-editorial/index.html" loading="lazy" title="시안 1 에디토리얼 미리보기"></iframe>
+      </div>
+    </figure>
+    <figure class="preview">
+      <figcaption>시안 2 · 소프트 모던 <a href="./sample-2-soft-modern/index.html" target="_blank" rel="noopener">새 창 ↗</a></figcaption>
+      <div class="frame-box">
+        <div class="fallback">미리보기가 안 보이나요?<a href="./sample-2-soft-modern/index.html">시안 2 새 창으로 열기 →</a></div>
+        <iframe src="./sample-2-soft-modern/index.html" loading="lazy" title="시안 2 소프트 모던 미리보기"></iframe>
+      </div>
+    </figure>
+    <figure class="preview">
+      <figcaption>시안 3 · 테크니컬 <a href="./sample-3-technical/index.html" target="_blank" rel="noopener">새 창 ↗</a></figcaption>
+      <div class="frame-box">
+        <div class="fallback">미리보기가 안 보이나요?<a href="./sample-3-technical/index.html">시안 3 새 창으로 열기 →</a></div>
+        <iframe src="./sample-3-technical/index.html" loading="lazy" title="시안 3 테크니컬 미리보기"></iframe>
+      </div>
+    </figure>
+  </div>
+
+  <footer class="gallery">
+    <p>출처: 사내 매출 DW (Finance) · 기준일: 2026-03-31 · n = 1,284,000 결제 건</p>
+    <p>가정: 환불·테스트 결제 제외, 환율 1,350원 고정. 본 갤러리의 모든 수치는 frontend-designer-pro 검증용 예시(임시) 데이터이며 실제 데이터가 아닙니다.</p>
+  </footer>
+
+</div>
+</body>
+</html>

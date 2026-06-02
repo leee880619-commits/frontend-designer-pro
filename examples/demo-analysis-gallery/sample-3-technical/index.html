@@ -1,0 +1,223 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<title>1분기 매출이 전분기 대비 12% 증가했다 — 2026 Q1 게임 서비스 분석</title>
+<meta name="description" content="2026년 1분기 게임 서비스 매출·이용자 분석 (예시 데이터)">
+<link rel="stylesheet" href="./tokens.css">
+<style>
+  *,*::before,*::after{box-sizing:border-box}
+  *{margin:0}
+  img,svg{display:block;max-width:100%;height:auto}
+  :where(h1,h2,h3){text-wrap:balance}
+  :where(p){text-wrap:pretty}
+
+  body{
+    background:var(--bg-page); color:var(--text-body);
+    font-family:var(--font-body); line-height:var(--line-height-base);
+    word-break:keep-all; letter-spacing:-0.01em; padding:var(--space-4);
+  }
+  :where(p,li,td,th,figcaption){word-break:keep-all; overflow-wrap:anywhere; line-height:var(--line-height-base)}
+  .skip-link{position:absolute; left:var(--space-2); top:-3rem; z-index:10;
+    background:var(--accent); color:var(--text-on-accent);
+    padding:var(--space-2) var(--space-3); border-radius:var(--radius-sm);
+    text-decoration:none; transition:top var(--motion-duration-fast) ease}
+  .skip-link:focus-visible{top:var(--space-2)}
+  :where(a,button,[tabindex]):focus-visible{
+    outline:var(--focus-ring-width) solid var(--focus-ring-color);
+    outline-offset:var(--focus-ring-offset)}
+  .wrap{max-width:70rem; margin-inline:auto}
+  .mono{font-family:var(--font-mono); font-variant-numeric:tabular-nums}
+
+  /* technical: 좌측 accent 바 헤더 + 고밀도 격자 패널 */
+  header.report{
+    border-left:4px solid var(--accent);
+    background:var(--bg-panel); border:1px solid var(--border-default); border-left-width:4px;
+    border-radius:var(--radius-sm); padding:var(--space-4) var(--space-5);
+    margin-bottom:var(--space-4);
+  }
+  .kicker{font-family:var(--font-mono); font-size:.72rem; letter-spacing:.06em;
+    color:var(--accent-strong); text-transform:uppercase; margin-bottom:var(--space-2)}
+  h1{font-weight:700; font-size:clamp(1.5rem,4vw,2.2rem); line-height:1.25; letter-spacing:-0.015em}
+  .deck{margin-top:var(--space-2); font-size:.98rem; color:var(--text-secondary); max-width:60ch}
+
+  /* KPI: 격자 셀, 모노스페이스 숫자 우측 정렬 느낌. 첫 셀(매출) 강조 보더 */
+  .kpis{display:grid; grid-template-columns:repeat(4,1fr); gap:1px;
+    background:var(--border-default); border:1px solid var(--border-default);
+    border-radius:var(--radius-sm); overflow:hidden; margin-bottom:var(--space-4)}
+  .kpi{background:var(--bg-panel); padding:var(--space-3) var(--space-4)}
+  .kpi.lead{box-shadow:inset 3px 0 0 var(--accent)}
+  .kpi .label{font-size:.78rem; color:var(--text-muted); margin-bottom:var(--space-1)}
+  .kpi .num{font-family:var(--font-mono); font-weight:700; font-variant-numeric:tabular-nums;
+    font-size:clamp(1.4rem,3vw,1.85rem); line-height:1.1}
+  .kpi.lead .num{color:var(--accent-strong); font-size:clamp(1.6rem,3.6vw,2.1rem)}
+  .kpi .delta{font-family:var(--font-mono); font-size:.8rem; color:var(--text-secondary); margin-top:var(--space-1)}
+  .kpi .delta b{color:var(--accent-strong)}
+
+  main{display:grid; grid-template-columns:repeat(2,1fr); gap:var(--space-4)}
+  @media (max-width:760px){
+    .kpis{grid-template-columns:1fr 1fr}
+    main{grid-template-columns:1fr}
+  }
+  section.panel{background:var(--bg-panel); border:1px solid var(--border-default);
+    border-radius:var(--radius-sm); padding:var(--space-4) var(--space-5)}
+  section h2{font-weight:700; font-size:1.18rem; line-height:1.3; margin-bottom:var(--space-2)}
+  section p{color:var(--text-secondary); font-size:.95rem; margin-bottom:var(--space-3)}
+
+  figure.chart{margin:0}
+  figure.chart figcaption{font-weight:700; font-size:1rem; line-height:1.35; margin-bottom:var(--space-3)}
+  .chart-svg{width:100%; height:auto}
+  .chart-svg .bar-val,.pt-lbl{font-size:11px; fill:var(--text-body); font-weight:700;
+    font-family:var(--font-mono)}
+  .chart-svg .bar-lbl,.x-lbl{font-size:11px; fill:var(--text-muted)}
+  .chart-svg .axis-unit,.axis-min,.axis-max{font-size:10px; fill:var(--text-muted); font-family:var(--font-mono)}
+
+  /* 노출형 데이터 표 (technical은 숨김 대신 데이터 테이블 직접 노출 — SR 대체본 겸용) */
+  table.data{width:100%; border-collapse:collapse; margin-top:var(--space-3); font-size:.85rem}
+  table.data caption{text-align:left; font-size:.78rem; color:var(--text-muted); margin-bottom:var(--space-2)}
+  table.data th,table.data td{border:1px solid var(--border-default); padding:.35rem .6rem; text-align:left}
+  table.data thead th{background:var(--bg-page); font-weight:600}
+  table.data td{font-family:var(--font-mono); font-variant-numeric:tabular-nums; text-align:right}
+  table.data th[scope=row]{font-weight:500; text-align:left}
+
+  footer.meta{grid-column:1/-1; background:var(--bg-panel); border:1px solid var(--border-default);
+    border-radius:var(--radius-sm); padding:var(--space-3) var(--space-4);
+    font-family:var(--font-mono); font-size:.78rem; color:var(--text-muted); margin-top:var(--space-2)}
+  footer.meta p{color:var(--text-muted); margin-bottom:var(--space-1)}
+  .backlink{display:inline-block; margin-top:var(--space-4); color:var(--accent-strong);
+    font-weight:600; text-decoration:none; font-family:var(--font-mono); font-size:.85rem}
+  .backlink:hover{text-decoration:underline}
+
+  @media print{
+    body{background:#fff}
+    section.panel,header.report,figure.chart,table.data{break-inside:avoid}
+    thead{display:table-header-group}
+    tr{break-inside:avoid}
+    .skip-link,.backlink{display:none}
+    svg{print-color-adjust:exact; -webkit-print-color-adjust:exact}
+  }
+</style>
+</head>
+<body>
+<a class="skip-link" href="#main">본문 바로가기</a>
+<div class="wrap">
+
+  <header class="report">
+    <p class="kicker">REPORT · 2026 Q1 · GAME SERVICE</p>
+    <h1>1분기 매출이 전분기 대비 12% 증가했다</h1>
+    <p class="deck">모바일이 성장을 견인하며 5개 분기 만에 최고 매출을 기록. 핵심 지표 4종이 모두 전분기 대비 상승.</p>
+  </header>
+
+  <section class="kpis" aria-label="핵심 지표 요약">
+    <div class="kpi lead">
+      <div class="label">분기 매출</div>
+      <div class="num">174억</div>
+      <div class="delta">vs 156억 <b>+12%</b></div>
+    </div>
+    <div class="kpi">
+      <div class="label">월 활성 이용자</div>
+      <div class="num">312만</div>
+      <div class="delta"><b>+8%</b></div>
+    </div>
+    <div class="kpi">
+      <div class="label">인당 결제액</div>
+      <div class="num">5,580</div>
+      <div class="delta">원 <b>+4%</b></div>
+    </div>
+    <div class="kpi">
+      <div class="label">신규 가입</div>
+      <div class="num">41만</div>
+      <div class="delta"><b>+19%</b></div>
+    </div>
+  </section>
+
+  <main id="main" tabindex="-1">
+    <section class="panel" aria-labelledby="s1">
+      <h2 id="s1">둔화하던 매출이 1분기에 다시 올라섰다</h2>
+      <p>2025 Q3 정체 후 Q4 반등, 2026 Q1까지 상승 지속. 5개 분기 중 최고치 174억 원.</p>
+      <figure class="chart">
+        <figcaption id="line-title">매출은 3분기 정체 후 두 분기 연속 상승했다</figcaption>
+        <svg viewBox="0 0 360 210" role="img" aria-labelledby="line-title line-desc" class="chart-svg">
+          <title>매출은 3분기 정체 후 두 분기 연속 상승했다</title>
+          <desc id="line-desc">분기별 매출(억원). 2025년 1분기 128, 2분기 141, 3분기 137, 4분기 156, 2026년 1분기 174. y축 시작값 120.</desc>
+          <line x1="48" y1="20" x2="48" y2="170" stroke="var(--color-viz-axis)" stroke-width="1"/>
+          <line x1="48" y1="170" x2="344" y2="170" stroke="var(--color-viz-axis)" stroke-width="1"/>
+          <text x="14" y="173" class="axis-min">120</text>
+          <text x="14" y="25" class="axis-max">180</text>
+          <line x1="48" y1="95" x2="344" y2="95" stroke="var(--color-viz-grid)" stroke-width="0.75"/>
+          <line x1="48" y1="57.5" x2="344" y2="57.5" stroke="var(--color-viz-grid)" stroke-width="0.5"/>
+          <line x1="48" y1="132.5" x2="344" y2="132.5" stroke="var(--color-viz-grid)" stroke-width="0.5"/>
+          <polyline fill="none" stroke="var(--color-viz-categorical-1)" stroke-width="2"
+            points="62,150 132,118 202,128.5 272,80 342,35"/>
+          <circle cx="62" cy="150" r="3" fill="var(--color-viz-categorical-1)"/>
+          <circle cx="132" cy="118" r="3" fill="var(--color-viz-categorical-1)"/>
+          <circle cx="202" cy="128.5" r="3" fill="var(--color-viz-categorical-1)"/>
+          <circle cx="272" cy="80" r="3" fill="var(--color-viz-categorical-1)"/>
+          <circle cx="342" cy="35" r="3" fill="var(--color-viz-categorical-1)"/>
+          <text x="62" y="144" text-anchor="middle" class="pt-lbl">128</text>
+          <text x="342" y="29" text-anchor="end" class="pt-lbl">174</text>
+          <text x="62" y="186" text-anchor="middle" class="x-lbl">25Q1</text>
+          <text x="132" y="186" text-anchor="middle" class="x-lbl">Q2</text>
+          <text x="202" y="186" text-anchor="middle" class="x-lbl">Q3</text>
+          <text x="272" y="186" text-anchor="middle" class="x-lbl">Q4</text>
+          <text x="342" y="186" text-anchor="end" class="x-lbl">26Q1</text>
+          <text x="48" y="14" class="axis-unit">억원</text>
+        </svg>
+        <table class="data">
+          <caption>분기별 매출(억원), y축 시작 120</caption>
+          <thead><tr><th scope="col">분기</th><th scope="col">매출</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">2025 Q1</th><td>128</td></tr>
+            <tr><th scope="row">2025 Q2</th><td>141</td></tr>
+            <tr><th scope="row">2025 Q3</th><td>137</td></tr>
+            <tr><th scope="row">2025 Q4</th><td>156</td></tr>
+            <tr><th scope="row">2026 Q1</th><td>174</td></tr>
+          </tbody>
+        </table>
+      </figure>
+    </section>
+
+    <section class="panel" aria-labelledby="s2">
+      <h2 id="s2">성장의 절반 이상이 모바일에서 나왔다</h2>
+      <p>플랫폼별 매출: 모바일 98억(56%), PC 52억(30%), 콘솔 24억(14%). 반등 주축은 모바일.</p>
+      <figure class="chart">
+        <figcaption id="bar-title">모바일이 1분기 매출의 56%를 책임진다</figcaption>
+        <svg viewBox="0 0 360 210" role="img" aria-labelledby="bar-title bar-desc" class="chart-svg">
+          <title>모바일이 1분기 매출의 56%를 책임진다</title>
+          <desc id="bar-desc">플랫폼별 매출(억원). 모바일 98, PC 52, 콘솔 24. 막대는 0에서 시작. 모바일이 최대.</desc>
+          <line x1="56" y1="170" x2="344" y2="170" stroke="var(--color-viz-axis)" stroke-width="1"/>
+          <text x="56" y="14" class="axis-unit">억원</text>
+          <rect x="80" y="32.8" width="56" height="137.2" fill="var(--color-viz-categorical-1)"/>
+          <text x="108" y="27" text-anchor="middle" class="bar-val">98</text>
+          <text x="108" y="186" text-anchor="middle" class="bar-lbl">모바일</text>
+          <rect x="166" y="97.2" width="56" height="72.8" fill="var(--color-viz-categorical-2)"/>
+          <text x="194" y="91.2" text-anchor="middle" class="bar-val">52</text>
+          <text x="194" y="186" text-anchor="middle" class="bar-lbl">PC</text>
+          <rect x="252" y="136.4" width="56" height="33.6" fill="var(--color-viz-categorical-2)"/>
+          <text x="280" y="130.4" text-anchor="middle" class="bar-val">24</text>
+          <text x="280" y="186" text-anchor="middle" class="bar-lbl">콘솔</text>
+        </svg>
+        <table class="data">
+          <caption>플랫폼별 매출(억원)</caption>
+          <thead><tr><th scope="col">플랫폼</th><th scope="col">매출</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">모바일</th><td>98</td></tr>
+            <tr><th scope="row">PC</th><td>52</td></tr>
+            <tr><th scope="row">콘솔</th><td>24</td></tr>
+          </tbody>
+        </table>
+      </figure>
+    </section>
+
+    <footer class="meta" aria-label="데이터 출처 및 가정">
+      <p>SOURCE: 사내 매출 DW (Finance) · AS-OF: 2026-03-31 · n = 1,284,000 결제 건</p>
+      <p>ASSUMPTIONS: 환불·테스트 결제 제외, 환율 1,350원 고정. 모든 수치는 검증용 예시(임시) 데이터.</p>
+    </footer>
+  </main>
+
+  <a class="backlink" href="../index.html">← 시안 갤러리로 돌아가기</a>
+</div>
+</body>
+</html>

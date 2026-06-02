@@ -1,0 +1,5 @@
+docs/dogfood/*.png
+docs/dogfood/*.zip
+node_modules/
+.DS_Store
+*.log

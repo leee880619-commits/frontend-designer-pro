@@ -1,0 +1,106 @@
+/* ============================================================
+   tokens.css — 디자인 토큰 단일 진실원천 (런타임 SSOT) · editorial 시안
+   ▶ 색·글씨를 바꾸려면 아래 "1. reference" 값만 고치세요.
+     2·3번(semantic/차트)은 자동으로 따라 바뀝니다.
+   personality: editorial (잡지 레이아웃) — 차분한 잉크 + 따뜻한 종이 + 벽돌 brand 1색
+   토큰명 규약: references/_contract.md §4 (brand=--color-brand-*, 차트=--color-viz-categorical-N)
+   ============================================================ */
+
+/* 1) 구형 브라우저용 hex 폴백 먼저 — oklch 미지원 환경(사내 임베드 등)이 읽는 값 */
+:root {
+  /* ── reference (원자재 팔레트 — 여기만 고치면 전체가 바뀝니다) ── */
+  --color-ink-900:   #211f2c;   /* 본문 글자: 짙은 남회색 잉크 */
+  --color-ink-700:   #44414f;   /* 보조 글자 */
+  --color-ink-500:   #6a6678;   /* 캡션·메타 */
+  --color-paper-50:  #faf7f0;   /* 페이지 바탕: 따뜻한 종이 */
+  --color-line-300:  #ddd6c8;   /* 구분선 */
+  --color-brand-600: #8a3322;   /* 절제된 1 brand accent: 벽돌/적포도 */
+  --color-brand-700: #6e2818;
+  --color-white:     #ffffff;
+  /* 차트 전용 reference (본문과 독립 네임스페이스, categorical 8색 이내) */
+  --color-viz-categorical-2: #b6ad9a; /* 중립 막대(강조 아닌 항목) */
+  --color-viz-categorical-1: #8a3322; /* 강조 = brand accent와 동일 H */
+  --color-viz-grid:    #e7e0d2;
+  --color-viz-axis:    #6a6678;
+}
+
+/* 2) oklch 지원 시 더 정확한 지각색으로 덮어쓰기(같은 색을 가리킴) */
+@supports (color: oklch(0 0 0)) {
+  :root {
+    --color-ink-900:   oklch(0.24 0.02 295);
+    --color-ink-700:   oklch(0.40 0.018 295);
+    --color-ink-500:   oklch(0.54 0.015 295);
+    --color-paper-50:  oklch(0.975 0.008 85);
+    --color-line-300:  oklch(0.875 0.012 85);
+    --color-brand-600: oklch(0.50 0.13 32);
+    --color-brand-700: oklch(0.42 0.13 32);
+    --color-white:     oklch(1 0 0);
+    --color-viz-categorical-2: oklch(0.74 0.025 85);
+    --color-viz-categorical-1: oklch(0.50 0.13 32);
+    --color-viz-grid:    oklch(0.91 0.012 85);
+    --color-viz-axis:    oklch(0.54 0.015 295);
+  }
+}
+
+:root {
+  /* ── semantic (역할 — reference를 var()로만 가리킴, 직접 값 금지) ── */
+  --bg-page:        var(--color-paper-50);
+  --text-body:      var(--color-ink-900);
+  --text-secondary: var(--color-ink-700);
+  --text-muted:     var(--color-ink-500);
+  --text-on-accent: var(--color-white);
+  --border-default: var(--color-line-300);
+  --accent:         var(--color-brand-600);
+  --accent-strong:  var(--color-brand-700);
+
+  /* ── a11y 1급 semantic (경량 모드에서도 필수) ── */
+  --focus-ring-color:     var(--color-brand-600);
+  --focus-ring-width:     2px;
+  --focus-ring-offset:    2px;
+  --motion-duration-fast: 120ms;
+  --motion-duration-base: 200ms;
+  --motion-reduce:        1;
+  --target-size-min:      24px;
+
+  /* ── 간격·타이포 (px 직박기 대신 토큰) ── */
+  --space-1: .25rem; --space-2: .5rem; --space-3: 1rem;
+  --space-4: 1.5rem; --space-6: 3rem; --space-8: 4.5rem;
+  --font-body:    "Pretendard", system-ui, -apple-system, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+  --font-heading: "Fraunces", "Pretendard", "Noto Serif KR", serif; /* 큰 제목 라틴은 세리프, 한글은 Pretendard 폴백 */
+  --line-height-base: 1.65;
+  --radius-sm: 4px;
+}
+
+/* 모드 전환은 reference 스왑 1회 (semantic 불변) */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-ink-900:   #ece7dd;
+    --color-ink-700:   #d2cdc3;   /* 다크 본문·리드: Lc≥75 (A-1 — 데모 자기게이트 통과) */
+    --color-ink-500:   #b3ada1;   /* 다크 보조·캡션: Lc≥60 */
+    --color-paper-50:  #1c1a22;
+    --color-line-300:  #3a3744;
+    /* 다크 hex 폴백: brand/viz 강조도 함께 스왑 (OKLCH 미지원+다크 시 라이트값 잔존 방지) */
+    --color-brand-600: #c4674f;        /* 다크: L↑ — 어두운 바탕 위 가독 */
+    --color-viz-categorical-1: #c4674f;
+    --color-viz-grid:  #34313c;
+  }
+}
+@supports (color: oklch(0 0 0)) {
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --color-ink-900:   oklch(0.92 0.012 85);
+      --color-ink-700:   oklch(0.845 0.012 85);  /* 다크 본문·리드 Lc≥75 (A-1) */
+      --color-ink-500:   oklch(0.74 0.013 85);   /* 다크 보조·캡션 Lc≥60 */
+      --color-paper-50:  oklch(0.20 0.012 295);
+      --color-line-300:  oklch(0.34 0.014 295);
+      --color-brand-600: oklch(0.62 0.12 32); /* 다크: L↑ C↓ 별도 파생 */
+      --color-viz-categorical-1: oklch(0.62 0.12 32);
+      --color-viz-grid:  oklch(0.30 0.012 295);
+    }
+  }
+}
+@media (prefers-reduced-motion: reduce) { :root { --motion-reduce: 0; } }
+@media (prefers-contrast: more) {
+  :root { --color-ink-900: #000; --border-default: var(--color-ink-900); }
+}
+@media print { :root { --color-paper-50: #fff; } }

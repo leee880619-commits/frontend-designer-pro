@@ -1,0 +1,587 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>frontend-designer-pro · 무빌드 무결성 감사기 (_audit.html)</title>
+<!--
+  ════════════════════════════════════════════════════════════════════════
+  _audit.html — dev-only 무빌드 in-browser 무결성 감사기
+  ────────────────────────────────────────────────────────────────────────
+  WHY (이 도구가 존재하는 이유):
+    references의 게이트(APCA AND WCAG 이중대비 · token lint · CVD 3종)는 모두
+    "BLOCK·skip 불가"로 선언돼 있으나, 실제 강제 수단(token-lint.js·axe-core)은
+    dev-only이고 WSL2/Windows에서 자주 미설치다. 그래서 게이트가 "에이전트가
+    긴 체크리스트를 눈으로 자가점검"으로 붕괴한다.
+    이 파일은 그 거리를 좁힌다 — Node·axe 설치 0, 브라우저 더블클릭만으로
+    실제 측정이 돈다.
+
+  WHAT (무엇을 하나 — 세 가지 게이트를 한 화면에서 실행):
+    A. 산출물(또는 단독 tokens.css)을 <iframe>으로 로드 →
+       getComputedStyle로 화면에 *실제로 깔린* 전경/배경 쌍을 추출 →
+       APCA(Lc) AND WCAG 재측정 → pass/fail 표.
+    B. tokens.css 텍스트에 lintTokens() 실행 →
+       dangling / circular / orphan / hardcoded / a11y 1급 누락 검출.
+    C. CVD 3종(protan/deutan/tritan) feColorMatrix 시뮬 토글 +
+       산출 색 목록을 3종으로 변환해 "구분 가능?"을 눈으로 확인.
+
+  계약 출처 (단일 소스 — 값을 바꾸려면 여기가 아니라 _contract.md를 고치고 동기화):
+    · APCA/WCAG 함수·Lc 임계 75/60/45/30 ……… references/color-token-contract.md §3,
+      references/a11y-checklist.md §1.2, references/_contract.md
+    · lintTokens / isRef / A11Y 7키 ……………… references/token-system.md §8,
+      references/_contract.md
+    · CVD Machado 2009 근사 행렬 ……………… references/color-token-contract.md §7.3
+
+  라이브러리 0개 · 무빌드 · 인라인 JS만. 사용자 산출물 폴더에는 포함하지 않는다.
+  ════════════════════════════════════════════════════════════════════════
+-->
+<style>
+  :root {
+    /* 이 도구 자신의 UI 색 — 산출물 토큰과 무관한 dev chrome. */
+    --ui-bg: #0f1115; --ui-panel: #181b22; --ui-line: #2a2f3a;
+    --ui-fg: #e6e9ef; --ui-muted: #9aa3b2; --ui-accent: #5b8cff;
+    --ui-pass: #3fb950; --ui-fail: #f85149; --ui-warn: #d29922;
+    color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; font: 14px/1.55 system-ui, "Segoe UI", sans-serif;
+    background: var(--ui-bg); color: var(--ui-fg);
+  }
+  header {
+    padding: 14px 20px; border-bottom: 1px solid var(--ui-line);
+    display: flex; flex-wrap: wrap; gap: 12px 20px; align-items: baseline;
+  }
+  header h1 { font-size: 16px; margin: 0; font-weight: 650; }
+  header .sub { color: var(--ui-muted); font-size: 12px; }
+  main { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--ui-line); }
+  @media (max-width: 900px) { main { grid-template-columns: 1fr; } }
+  section.pane { background: var(--ui-bg); padding: 16px 20px; min-width: 0; }
+  section.pane h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .06em;
+    color: var(--ui-muted); margin: 0 0 10px; }
+  .controls { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; align-items: center; }
+  button, label.filebtn {
+    font: inherit; cursor: pointer; border: 1px solid var(--ui-line);
+    background: var(--ui-panel); color: var(--ui-fg);
+    padding: 6px 12px; border-radius: 7px;
+  }
+  button:hover, label.filebtn:hover { border-color: var(--ui-accent); }
+  button.primary { background: var(--ui-accent); border-color: var(--ui-accent); color: #fff; font-weight: 600; }
+  input[type=file] { display: none; }
+  input[type=text] {
+    font: inherit; flex: 1 1 220px; min-width: 0;
+    background: var(--ui-panel); color: var(--ui-fg);
+    border: 1px solid var(--ui-line); border-radius: 7px; padding: 6px 10px;
+  }
+  textarea {
+    width: 100%; min-height: 150px; resize: vertical;
+    font: 12px/1.5 ui-monospace, "Cascadia Code", Consolas, monospace;
+    background: var(--ui-panel); color: var(--ui-fg);
+    border: 1px solid var(--ui-line); border-radius: 8px; padding: 10px;
+  }
+  iframe { width: 100%; height: 300px; border: 1px solid var(--ui-line); border-radius: 8px; background: #fff; }
+  table { width: 100%; border-collapse: collapse; font-size: 12.5px; margin-top: 8px; }
+  th, td { text-align: left; padding: 5px 8px; border-bottom: 1px solid var(--ui-line); vertical-align: top; }
+  th { color: var(--ui-muted); font-weight: 600; }
+  td.num { text-align: right; font-variant-numeric: tabular-nums; font-family: ui-monospace, monospace; }
+  .badge { display: inline-block; padding: 1px 8px; border-radius: 999px; font-size: 11px; font-weight: 700; }
+  .badge.pass { background: rgba(63,185,80,.16); color: var(--ui-pass); }
+  .badge.fail { background: rgba(248,81,73,.16); color: var(--ui-fail); }
+  .badge.warn { background: rgba(210,153,34,.16); color: var(--ui-warn); }
+  .swatch { display: inline-block; width: 12px; height: 12px; border-radius: 3px;
+    border: 1px solid rgba(255,255,255,.25); vertical-align: -1px; margin-right: 4px; }
+  .summary { margin: 8px 0 0; padding: 10px 12px; border-radius: 8px; background: var(--ui-panel);
+    border: 1px solid var(--ui-line); font-size: 13px; }
+  .summary.ok { border-color: var(--ui-pass); }
+  .summary.bad { border-color: var(--ui-fail); }
+  .hint { color: var(--ui-muted); font-size: 11.5px; margin-top: 6px; }
+  code { font-family: ui-monospace, monospace; background: var(--ui-panel); padding: 1px 5px; border-radius: 4px; }
+  details { margin-top: 8px; }
+  summary { cursor: pointer; color: var(--ui-muted); }
+  .cvd-cell { display: inline-flex; align-items: center; gap: 6px; }
+  .empty { color: var(--ui-muted); font-style: italic; padding: 8px 0; }
+</style>
+
+<!-- CVD 시뮬레이션 필터 정의 (Machado 2009 근사 — color-token-contract.md §7.3 와 동일 행렬) -->
+<svg aria-hidden="true" style="position:absolute;width:0;height:0">
+  <defs>
+    <filter id="cvd-protan"><feColorMatrix type="matrix" values="
+      0.567 0.433 0 0 0  0.558 0.442 0 0 0  0 0.242 0.758 0 0  0 0 0 1 0"/></filter>
+    <filter id="cvd-deutan"><feColorMatrix type="matrix" values="
+      0.625 0.375 0 0 0  0.700 0.300 0 0 0  0 0.300 0.700 0 0  0 0 0 1 0"/></filter>
+    <filter id="cvd-tritan"><feColorMatrix type="matrix" values="
+      0.950 0.050 0 0 0  0 0.433 0.567 0 0  0 0.475 0.525 0 0  0 0 0 1 0"/></filter>
+  </defs>
+</svg>
+</head>
+<body>
+<header>
+  <h1>무결성 감사기 <span class="sub">frontend-designer-pro · dev-only · 라이브러리 0개</span></h1>
+  <span class="sub">A. 실측 대비(APCA AND WCAG) &nbsp;·&nbsp; B. 토큰 lint &nbsp;·&nbsp; C. CVD 3종</span>
+</header>
+
+<main>
+  <!-- ═══ A. 산출물 로드 + 실측 대비 ═══ -->
+  <section class="pane" id="pane-contrast">
+    <h2>A · 산출물 대비 실측 (getComputedStyle)</h2>
+    <div class="controls">
+      <input type="text" id="urlInput" placeholder="감사할 HTML 경로/URL (예: ../examples/demo-analysis-gallery/sample-1-editorial/index.html)">
+      <button class="primary" id="loadBtn">로드 + 측정</button>
+    </div>
+    <p class="hint">로컬 파일 더블클릭으로 이 도구를 열었다면, 같은 폴더 기준 상대경로를 넣으세요.
+      iframe은 <b>같은 출처</b>의 파일만 읽습니다(file:// 직접 열기 시 브라우저 정책상 제약이 있으면 간이 서버 권장:
+      <code>python -m http.server</code>). 측정 대상은 <b>전경색 vs 실제 깔린 배경색</b>이며, 배경이 투명하면 부모를 거슬러 합성합니다.</p>
+    <iframe id="frame" title="감사 대상 미리보기"></iframe>
+    <div id="contrastSummary"></div>
+    <table id="contrastTable" hidden>
+      <thead><tr>
+        <th>요소</th><th>역할</th><th>전경</th><th>배경</th>
+        <th class="num">APCA Lc</th><th class="num">WCAG</th><th>판정</th>
+      </tr></thead>
+      <tbody></tbody>
+    </table>
+    <p class="empty" id="contrastEmpty">아직 측정 전입니다.</p>
+  </section>
+
+  <!-- ═══ B. tokens.css lint ═══ -->
+  <section class="pane" id="pane-lint">
+    <h2>B · tokens.css 무결성 lint</h2>
+    <div class="controls">
+      <label class="filebtn">tokens.css 열기<input type="file" id="cssFile" accept=".css,text/css"></label>
+      <button id="lintBtn">붙여넣은 CSS lint</button>
+      <button id="lintFromFrame">로드된 산출물에서 추출</button>
+    </div>
+    <textarea id="cssInput" placeholder="여기에 tokens.css 내용을 붙여넣거나, 위 버튼으로 파일을 여세요."></textarea>
+    <div id="lintSummary"></div>
+    <table id="lintTable" hidden>
+      <thead><tr><th>등급</th><th>유형</th><th>상세</th></tr></thead>
+      <tbody></tbody>
+    </table>
+    <p class="empty" id="lintEmpty">아직 lint 전입니다.</p>
+  </section>
+
+  <!-- ═══ C. CVD 시뮬 ═══ -->
+  <section class="pane" id="pane-cvd">
+    <h2>C · 색각(CVD) 3종 시뮬레이션</h2>
+    <div class="controls">
+      <button id="cvdNormal">정상</button>
+      <button id="cvdProtan">적색맹(protan)</button>
+      <button id="cvdDeutan">녹색맹(deutan)</button>
+      <button id="cvdTritan">청색맹(tritan)</button>
+    </div>
+    <p class="hint">위 버튼은 <b>로드된 산출물 iframe 전체</b>에 필터를 겁니다. 아래 표는 tokens.css의 의미색·차트색을
+      3종으로 변환해 <b>두 색이 구분되는지</b>(ΔE 근사)를 보여줍니다. 한 쌍이라도 "구분 어려움"이면
+      §7.2 이중 인코딩(색 외 라벨/패턴)을 적용하세요.</p>
+    <table id="cvdTable" hidden>
+      <thead><tr><th>토큰</th><th>정상</th><th>protan</th><th>deutan</th><th>tritan</th></tr></thead>
+      <tbody></tbody>
+    </table>
+    <div id="cvdPairs"></div>
+    <p class="empty" id="cvdEmpty">tokens.css를 lint하면 색 목록이 채워집니다.</p>
+  </section>
+
+  <!-- ═══ D. redteam 증거 내보내기 ═══ -->
+  <section class="pane" id="pane-export">
+    <h2>D · redteam 증거 표 내보내기</h2>
+    <p class="hint">redteam(코드 미실행 · Read/Grep/Glob only)은 이 도구의 출력 표를 <b>입력 증거</b>로 삼습니다.
+      아래 버튼으로 A·B·C 결과를 마크다운 표로 복사해 무결성 리포트/감사 메시지에 붙이세요.</p>
+    <div class="controls"><button class="primary" id="exportBtn">결과를 마크다운으로 복사</button></div>
+    <textarea id="exportOut" placeholder="여기에 마크다운 증거 표가 생성됩니다." readonly></textarea>
+  </section>
+</main>
+
+<script>
+/* ═══════════════════════════════════════════════════════════════════════
+   계약 상수 (SSOT: references/_contract.md). 값을 바꿀 땐 _contract.md를 먼저
+   고치고 여기를 동기화한다. tools/kb-consistency-check.sh 가 드리프트를 단언.
+   ═══════════════════════════════════════════════════════════════════════ */
+// APCA Lc 하한 (SSOT: _contract.md §3). incidental = 출처·푸터·저작권·백링크 등 의도적으로
+// de-emphasize된 spot 텍스트 — APCA 카테고리상 Lc≥45(대형/UI와 동일 밴드)로 본다(핵심 본문과 구분).
+const LC = { body: 75, secondary: 60, large: 45, incidental: 45, disabled: 30 };
+const WCAG = { body: 4.5, secondary: 4.5, large: 3, incidental: 3, disabled: 0 };
+const A11Y = ['--focus-ring-color','--focus-ring-width','--focus-ring-offset',
+              '--motion-duration-fast','--motion-duration-base','--motion-reduce','--target-size-min'];
+// reference 계층 판별 (token-system.md §8 isRef 와 동일 컨벤션: --color-/--space-/--font-/...)
+const isRef = n => /^--color-|^--space-|^--font-|^--line-|^--radius-|^--shadow-|^--duration-/.test(n);
+
+/* ── 색 측정 함수 (color-token-contract.md §3.2 와 동일식) ───────────────── */
+function wcagRatio(hexA, hexB) {
+  const lum = hex => {
+    const c = hex.replace('#','').match(/.{2}/g).map(h => parseInt(h,16)/255)
+      .map(v => v <= 0.03928 ? v/12.92 : Math.pow((v+0.055)/1.055, 2.4));
+    return 0.2126*c[0] + 0.7152*c[1] + 0.0722*c[2];
+  };
+  const a = lum(hexA), b = lum(hexB);
+  return (Math.max(a,b)+0.05) / (Math.min(a,b)+0.05);
+}
+function apcaLc(textHex, bgHex) {
+  const Ys = hex => {
+    const c = hex.replace('#','').match(/.{2}/g).map(h => parseInt(h,16)/255);
+    return 0.2126729*Math.pow(c[0],2.4) + 0.7151522*Math.pow(c[1],2.4) + 0.0721750*Math.pow(c[2],2.4);
+  };
+  let Ytxt = Ys(textHex), Ybg = Ys(bgHex);
+  const blkThr=0.022, blkClmp=1.414;
+  const clamp = Y => Y < blkThr ? Y + Math.pow(blkThr - Y, blkClmp) : Y;
+  Ytxt = clamp(Ytxt); Ybg = clamp(Ybg);
+  if (Math.abs(Ybg - Ytxt) < 0.0005) return 0;
+  let SAPC, Lc;
+  if (Ybg > Ytxt) {
+    SAPC = (Math.pow(Ybg,0.56) - Math.pow(Ytxt,0.57)) * 1.14;
+    Lc = SAPC < 0.001 ? 0 : (SAPC - 0.027) * 100;
+  } else {
+    SAPC = (Math.pow(Ybg,0.65) - Math.pow(Ytxt,0.62)) * 1.14;
+    Lc = SAPC > -0.001 ? 0 : (SAPC + 0.027) * 100;
+  }
+  return +Math.abs(Lc).toFixed(1);
+}
+
+/* ── 토큰 lint (token-system.md §8 lintTokens 와 동일 로직) ──────────────── */
+function lintTokens(css) {
+  const def = {};
+  const re = /(--[\w-]+)\s*:\s*([^;]+);/g;
+  let m; while ((m = re.exec(css))) def[m[1]] = m[2].trim();
+  const refs = v => [...v.matchAll(/var\(\s*(--[\w-]+)/g)].map(x => x[1]);
+  const used = new Set(), block = [], warn = [];
+  for (const [name, val] of Object.entries(def)) {
+    const isHard = !val.includes('var(') &&
+      (/#[0-9a-fA-F]{3,8}\b/.test(val) || /\b\d+(\.\d+)?px\b/.test(val));
+    // a11y 1급 7키는 설계상 raw px/ms/플래그를 담으므로 HARDCODE 면제(_contract.md §5·§6, token-system §8과 동일)
+    if (isHard && !isRef(name) && !A11Y.includes(name)) block.push({type:'HARDCODE', detail:`${name}: ${val} (var()로 참조하세요)`});
+    for (const r of refs(val)) {
+      used.add(r);
+      if (!(r in def)) block.push({type:'DANGLING', detail:`${name} → ${r} (정의 없음)`});
+    }
+  }
+  const seen = (start, n, path) => {
+    for (const r of refs(def[n] || '')) {
+      if (r === start) { block.push({type:'CIRCULAR', detail:`${path.join(' → ')} → ${r}`}); return; }
+      if (def[r] && !path.includes(r)) seen(start, r, [...path, r]);
+    }
+  };
+  for (const n of Object.keys(def)) seen(n, n, [n]);
+  for (const n of Object.keys(def)) if (!used.has(n) && !A11Y.includes(n)) warn.push({type:'ORPHAN', detail:`${n} (아무도 참조 안 함)`});
+  for (const a of A11Y) if (!(a in def)) block.push({type:'A11Y-MISS', detail:`${a} (경량 모드도 필수)`});
+  return { ok: block.length === 0, block, warn, def };
+}
+
+/* ── 색 정규화: 임의 CSS Color 4 값 → #rrggbb (+ alpha) ─────────────────────
+   getComputedStyle는 Chrome에서 oklch 저작 색을 `oklch(...)`로 그대로 반환한다
+   (rgb()로 직렬화하지 않음). 이 플러그인은 OKLCH-우선을 강제하므로 정상 산출물일수록
+   색이 oklch로 온다. 따라서 정규식 파싱(#hex/rgb만) 대신 **1×1 캔버스 픽셀 readback**으로
+   브라우저가 그릴 수 있는 모든 CSS Color 4 값(oklch/oklab/color()/hsl/named/hex/rgb)을
+   실제 렌더된 sRGB 바이트로 환산한다. 라이브러리 0·무빌드 유지. */
+const _normCanvas = (() => { const c = document.createElement('canvas'); c.width = c.height = 1; return c; })();
+const _normCtx = _normCanvas.getContext('2d', { willReadFrequently: true });
+// 색을 그려 [r,g,b,a(0~255)] 반환. 무효/미지원이면 null.
+function rgbaOf(color) {
+  color = (color || '').trim();
+  if (!color) return null;
+  try {
+    _normCtx.clearRect(0, 0, 1, 1);
+    _normCtx.fillStyle = '#000';     // 무효값이면 직전 유효값(#000) 유지되므로 센티넬
+    _normCtx.fillStyle = color;      // 파싱 불가면 fillStyle이 안 바뀜(여전히 #000)
+    _normCtx.fillRect(0, 0, 1, 1);
+    const d = _normCtx.getImageData(0, 0, 1, 1).data;
+    return [d[0], d[1], d[2], d[3]];
+  } catch (e) { return null; }
+}
+function toHex(color) {
+  const d = rgbaOf(color);
+  if (!d) return null;
+  if (d[3] === 0) return null;       // 완전 투명 → effectiveBg 합성이 부모로 진행하게
+  return '#' + [d[0], d[1], d[2]].map(v => v.toString(16).padStart(2, '0')).join('');
+}
+
+/* ── 실제 깔린 배경 합성: 요소가 (반)투명하면 조상으로 거슬러 첫 불투명색 ──
+   배경 alpha 판별을 정규식(rgba만) 대신 픽셀 readback의 d[3]로 한다 → oklch 배경도 처리. */
+function effectiveBg(el, win) {
+  let node = el;
+  while (node && node.nodeType === 1) {
+    const d = rgbaOf(win.getComputedStyle(node).backgroundColor);
+    if (d && d[3] > 13) {            // alpha > ~0.05(=13/255) 이면 사실상 불투명한 배경
+      return '#' + [d[0], d[1], d[2]].map(v => v.toString(16).padStart(2, '0')).join('');
+    }
+    node = node.parentElement;
+  }
+  return '#ffffff'; // 최종 폴백: 흰 페이지
+}
+
+/* 역할 추론: 크기·굵기 + 의미 맥락으로 분류 (간이 — 경계는 DevTools APCA 교차검증).
+   incidental 티어: 출처·푸터·저작권·백링크 등 *의도적으로 de-emphasize된 spot 텍스트*는
+   본문(Lc≥75)이 아니라 APCA spot-text 밴드(Lc≥45)로 본다 → footer/copyright/메타를
+   body 기준으로 과탐해 비개발자가 멀쩡한 푸터를 고치려 드는 오해를 막는다. */
+function roleOf(cs, el) {
+  const px = parseFloat(cs.fontSize) || 16;
+  const w = parseInt(cs.fontWeight) || 400;
+  const large = px >= 24 || (px >= 18.66 && w >= 700);
+  if (large) return 'large';
+  // incidental: <small> 이거나, footer/contentinfo 랜드마크 후손이거나,
+  // 클래스에 footer/meta/copyright/eyebrow/caption/credit 류 신호가 있는 작은 글씨.
+  if (el) {
+    const tag = el.tagName.toLowerCase();
+    const inFooter = !!el.closest('footer, [role="contentinfo"], .data-meta, .site-footer');
+    const cls = (el.className && el.className.baseVal !== undefined ? el.className.baseVal : (el.className || '')) + '';
+    // caption·source는 제외 — 차트 figcaption/캡션은 takeaway(핵심)를 담아 spot-text로 완화하면 위험.
+    //   푸터 출처는 inFooter(.data-meta/footer closest)로 이미 잡히므로 bare 'source' 클래스 완화 불필요.
+    const metaCls = /footer|copyright|eyebrow|overline|kicker|credit|byline|legal|disclaimer|backlink|back-link|breadcrumb/i.test(cls);
+    if (tag === 'small' || inFooter || metaCls) return 'incidental';
+  }
+  if (px <= 13) return 'secondary';
+  return 'body';
+}
+
+/* ═══ A. iframe 로드 + 측정 ═══ */
+const frame = document.getElementById('frame');
+let lastContrastRows = [], lastLint = null, lastCvdRows = [];
+
+document.getElementById('loadBtn').onclick = () => {
+  const url = document.getElementById('urlInput').value.trim();
+  if (!url) return;
+  frame.src = url;
+};
+frame.addEventListener('load', () => { measureContrast(); });
+
+function measureContrast() {
+  const tbody = document.querySelector('#contrastTable tbody');
+  const empty = document.getElementById('contrastEmpty');
+  const tableEl = document.getElementById('contrastTable');
+  const summary = document.getElementById('contrastSummary');
+  tbody.innerHTML = ''; lastContrastRows = [];
+  let win, doc;
+  try { win = frame.contentWindow; doc = frame.contentDocument; if (!doc) throw 0; }
+  catch (e) {
+    empty.hidden = false; tableEl.hidden = true;
+    empty.textContent = '⚠ iframe을 읽을 수 없습니다(교차 출처/파일 정책). 같은 폴더의 상대경로 또는 간이 서버로 여세요.';
+    summary.innerHTML = ''; return;
+  }
+  // 텍스트를 담은 요소를 표본 수집(중복 색쌍은 1회만)
+  const candidates = doc.querySelectorAll('p, h1, h2, h3, h4, h5, h6, a, button, span, li, td, th, label, caption, figcaption, small');
+  const sampleSize = candidates.length;
+  const seenPairs = new Set();
+  let pass = 0, fail = 0;
+  for (const el of candidates) {
+    const txt = (el.textContent || '').trim();
+    if (!txt || txt.length < 2) continue;
+    if (el.children.length && !Array.prototype.some.call(el.childNodes, n => n.nodeType === 3 && n.textContent.trim())) continue; // 직접 텍스트 노드 보유만
+    const cs = win.getComputedStyle(el);
+    if (cs.visibility === 'hidden' || cs.display === 'none' || parseFloat(cs.opacity) === 0) continue;
+    // 화면 밖/0크기 요소 제외: 스킵링크(평소 top:-48px로 문서 위로 숨김)·visually-hidden(1px clip)
+    // 등은 평소 보이지 않으므로 측정 대상 아님(false-positive FAIL 방지).
+    // 한계: position:fixed 요소는 페이지좌표 보정과 어긋나 드물게 표본에서 빠질 수 있다
+    //   (제외 방향이라 false-FAIL은 아님). 고정 헤더·플로팅 CTA의 텍스트 대비는 별도 확인 권장.
+    const r = el.getBoundingClientRect();
+    const pageTop = r.top + win.scrollY, pageLeft = r.left + win.scrollX;
+    if (r.width < 2 || r.height < 2 ||        // 사실상 0크기(visually-hidden 1px 등)
+        r.bottom <= 0 || r.right <= 0 ||      // 문서 위/왼쪽 밖으로 완전히 벗어남(스킵링크 top:-48px)
+        pageTop < -1 || pageLeft < -1) continue; // 페이지 좌표가 음수(off-canvas 숨김)
+
+    const fg = toHex(cs.color);
+    const bg = effectiveBg(el, win);
+    if (!fg || !bg) continue;
+    const role = roleOf(cs, el);
+    const key = fg + '|' + bg + '|' + role;
+    if (seenPairs.has(key)) continue;
+    seenPairs.add(key);
+    const lc = apcaLc(fg, bg), ratio = +wcagRatio(fg, bg).toFixed(2);
+    const okLc = lc >= LC[role], okW = ratio >= WCAG[role];
+    const ok = okLc && okW;
+    ok ? pass++ : fail++;
+    lastContrastRows.push({ sample: txt.slice(0,28), role, fg, bg, lc, ratio, ok });
+  }
+  if (!lastContrastRows.length) {
+    empty.hidden = false; tableEl.hidden = true;
+    empty.textContent = '텍스트 요소를 찾지 못했습니다(빈 페이지이거나 색 추출 실패).';
+    summary.innerHTML = ''; return;
+  }
+  empty.hidden = true; tableEl.hidden = false;
+  for (const r of lastContrastRows) {
+    const tr = document.createElement('tr');
+    tr.innerHTML =
+      `<td>${escapeHtml(r.sample)}</td><td>${r.role}</td>` +
+      `<td><span class="swatch" style="background:${r.fg}"></span>${r.fg}</td>` +
+      `<td><span class="swatch" style="background:${r.bg}"></span>${r.bg}</td>` +
+      `<td class="num">${r.lc}</td><td class="num">${r.ratio}</td>` +
+      `<td><span class="badge ${r.ok?'pass':'fail'}">${r.ok?'PASS':'FAIL'}</span></td>`;
+    tbody.appendChild(tr);
+  }
+  // 핵심(본문/보조/대형) FAIL과 incidental(출처·푸터·백링크 등) 낮음을 분리 보고.
+  // 핵심 FAIL = 반드시 교체(BLOCK). incidental 낮음 = de-emphasize 의도일 수 있어 DevTools APCA 교차확인 권장(연성).
+  const coreRoles = new Set(['body', 'secondary', 'large']);
+  const coreFail = lastContrastRows.filter(r => !r.ok && coreRoles.has(r.role)).length;
+  const incidentalLow = lastContrastRows.filter(r => !r.ok && !coreRoles.has(r.role)).length;
+  if (coreFail > 0) {
+    summary.className = 'summary bad';
+    summary.innerHTML = `<b>대비 게이트 FAIL</b> — 핵심 텍스트 ${coreFail}쌍이 임계 미달. <span class="badge fail">BLOCK</span> 해당 색쌍을 교체 후 재산출하세요.` +
+      (incidentalLow ? ` (그 외 출처·푸터 등 incidental ${incidentalLow}쌍 낮음 — 의도적 de-emphasize면 OK, 애매하면 DevTools APCA 교차확인.)` : '');
+  } else if (incidentalLow > 0) {
+    summary.className = 'summary ok';
+    summary.innerHTML = `<b>핵심 대비 PASS</b> — 본문·제목 등 핵심 ${lastContrastRows.length - incidentalLow}쌍 APCA AND WCAG 통과. ` +
+      `출처·푸터·백링크 등 <b>incidental ${incidentalLow}쌍은 의도적으로 낮춘 보조 텍스트</b>일 수 있다(spot-text 기준 Lc≥45). 교체 전 DevTools APCA로 교차확인 권장 — 자동 BLOCK 아님.`;
+  } else {
+    summary.className = 'summary ok';
+    summary.innerHTML = `<b>대비 게이트 PASS</b> — 표본 ${lastContrastRows.length}쌍 모두 APCA AND WCAG 통과 (스캔 후보 ${sampleSize}개).`;
+  }
+}
+
+/* ═══ B. lint ═══ */
+function runLint(css) {
+  const empty = document.getElementById('lintEmpty');
+  const tableEl = document.getElementById('lintTable');
+  const tbody = document.querySelector('#lintTable tbody');
+  const summary = document.getElementById('lintSummary');
+  tbody.innerHTML = '';
+  if (!css || !css.trim()) {
+    empty.hidden = false; tableEl.hidden = true; summary.innerHTML = '';
+    empty.textContent = '입력된 CSS가 없습니다.'; return;
+  }
+  const res = lintTokens(css); lastLint = res;
+  const rows = [...res.block.map(b => ({grade:'BLOCK', ...b})), ...res.warn.map(w => ({grade:'WARN', ...w}))];
+  if (!rows.length) {
+    empty.hidden = false; tableEl.hidden = true;
+    empty.textContent = '';
+  } else {
+    empty.hidden = true; tableEl.hidden = false;
+    for (const r of rows) {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td><span class="badge ${r.grade==='BLOCK'?'fail':'warn'}">${r.grade}</span></td>`+
+        `<td>${r.type}</td><td>${escapeHtml(r.detail)}</td>`;
+      tbody.appendChild(tr);
+    }
+  }
+  summary.className = 'summary ' + (res.ok ? 'ok' : 'bad');
+  summary.innerHTML = res.ok
+    ? `<b>토큰 lint PASS</b> — BLOCK 0건${res.warn.length?`, WARN ${res.warn.length}건(고아/레이어 — 알림만)`:''}. 토큰 ${Object.keys(res.def).length}개 검사.`
+    : `<b>토큰 lint FAIL</b> — BLOCK ${res.block.length}건. <span class="badge fail">출고 금지</span> 교체 후 재산출(skip 불가).`;
+  buildCvd(res.def);
+}
+document.getElementById('lintBtn').onclick = () => runLint(document.getElementById('cssInput').value);
+document.getElementById('cssFile').onchange = e => {
+  const f = e.target.files[0]; if (!f) return;
+  const r = new FileReader();
+  r.onload = () => { document.getElementById('cssInput').value = r.result; runLint(r.result); };
+  r.readAsText(f);
+};
+document.getElementById('lintFromFrame').onclick = () => {
+  try {
+    const doc = frame.contentDocument; if (!doc) throw 0;
+    // <style> 태그 + 링크된 스타일시트 규칙 텍스트를 모아 lint
+    let css = '';
+    for (const s of doc.querySelectorAll('style')) css += s.textContent + '\n';
+    for (const ss of doc.styleSheets) {
+      try { for (const rule of ss.cssRules) css += rule.cssText + '\n'; } catch (e) {}
+    }
+    document.getElementById('cssInput').value = css;
+    runLint(css);
+  } catch (e) {
+    alert('로드된 산출물에서 CSS를 읽지 못했습니다(교차 출처/미로드). 먼저 A에서 로드하세요.');
+  }
+};
+
+/* ═══ C. CVD ═══ */
+function applyCvd(filter) {
+  try { frame.contentDocument.body.style.filter = filter; }
+  catch (e) { alert('iframe 본문에 필터를 걸지 못했습니다(먼저 A에서 산출물을 로드하세요).'); }
+}
+document.getElementById('cvdNormal').onclick = () => applyCvd('');
+document.getElementById('cvdProtan').onclick = () => applyCvd('url(#cvd-protan)');
+document.getElementById('cvdDeutan').onclick = () => applyCvd('url(#cvd-deutan)');
+document.getElementById('cvdTritan').onclick = () => applyCvd('url(#cvd-tritan)');
+
+// Machado 2009 근사 행렬을 JS로 직접 적용(스와치 변환·구분 가능성 판정용)
+const CVD_M = {
+  protan: [0.567,0.433,0, 0.558,0.442,0, 0,0.242,0.758],
+  deutan: [0.625,0.375,0, 0.700,0.300,0, 0,0.300,0.700],
+  tritan: [0.950,0.050,0, 0,0.433,0.567, 0,0.475,0.525],
+};
+function cvdHex(hex, kind) {
+  const c = hex.replace('#','').match(/.{2}/g).map(h => parseInt(h,16));
+  const M = CVD_M[kind];
+  const out = [0,1,2].map(i => {
+    const v = M[i*3]*c[0] + M[i*3+1]*c[1] + M[i*3+2]*c[2];
+    return Math.max(0, Math.min(255, Math.round(v)));
+  });
+  return '#' + out.map(v => v.toString(16).padStart(2,'0')).join('');
+}
+// 두 색의 구분 가능성: 간이 sRGB 유클리드 ΔE (>=25 면 충분히 구분)
+function colorDist(h1, h2) {
+  const a = h1.replace('#','').match(/.{2}/g).map(x=>parseInt(x,16));
+  const b = h2.replace('#','').match(/.{2}/g).map(x=>parseInt(x,16));
+  return Math.round(Math.sqrt((a[0]-b[0])**2 + (a[1]-b[1])**2 + (a[2]-b[2])**2));
+}
+function buildCvd(def) {
+  const tableEl = document.getElementById('cvdTable');
+  const tbody = document.querySelector('#cvdTable tbody');
+  const empty = document.getElementById('cvdEmpty');
+  const pairsEl = document.getElementById('cvdPairs');
+  tbody.innerHTML = ''; pairsEl.innerHTML = ''; lastCvdRows = [];
+  // 의미색·차트색만 골라 표시 (viz/danger/success/warning/accent/brand 등)
+  const picks = [];
+  for (const [name, raw] of Object.entries(def||{})) {
+    if (!/viz|danger|success|warn|accent|brand|categorical|sequential|diverging/i.test(name)) continue;
+    // 값이 var()면 정의를 한 단계 따라간다(간이 1-hop)
+    let val = raw;
+    const vm = val.match(/var\(\s*(--[\w-]+)/);
+    if (vm && def[vm[1]]) val = def[vm[1]];
+    const hex = toHex(val);
+    if (hex) picks.push({ name, hex });
+  }
+  if (!picks.length) { empty.hidden = false; tableEl.hidden = true; empty.textContent = '의미색/차트색 토큰을 찾지 못했습니다.'; return; }
+  empty.hidden = true; tableEl.hidden = false;
+  for (const p of picks) {
+    const tr = document.createElement('tr');
+    const cell = h => `<span class="cvd-cell"><span class="swatch" style="background:${h}"></span>${h}</span>`;
+    tr.innerHTML = `<td>${p.name}</td><td>${cell(p.hex)}</td>`+
+      `<td>${cell(cvdHex(p.hex,'protan'))}</td>`+
+      `<td>${cell(cvdHex(p.hex,'deutan'))}</td>`+
+      `<td>${cell(cvdHex(p.hex,'tritan'))}</td>`;
+    tbody.appendChild(tr);
+    lastCvdRows.push(p);
+  }
+  // categorical/의미색 쌍 구분 가능성 점검
+  const cat = picks.filter(p => /categorical|viz|brand|accent|danger|success|warn/i.test(p.name));
+  const bad = [];
+  for (let i = 0; i < cat.length; i++) for (let j = i+1; j < cat.length; j++) {
+    for (const kind of ['protan','deutan','tritan']) {
+      const d = colorDist(cvdHex(cat[i].hex,kind), cvdHex(cat[j].hex,kind));
+      if (d < 25) bad.push(`${cat[i].name} ↔ ${cat[j].name} (${kind} ΔE≈${d})`);
+    }
+  }
+  if (bad.length) {
+    pairsEl.innerHTML = `<div class="summary bad"><b>CVD 구분 위험 ${bad.length}쌍</b> — 색만으로 구분 어려움. §7.2 이중 인코딩 적용.`+
+      `<details><summary>상세</summary>${bad.map(b=>escapeHtml(b)).join('<br>')}</details></div>`;
+  } else {
+    pairsEl.innerHTML = `<div class="summary ok"><b>CVD 구분 OK</b> — 검사한 색쌍 모두 3종에서 구분 가능(ΔE≥25 근사).</div>`;
+  }
+}
+
+/* ═══ D. 마크다운 증거 내보내기 (redteam 입력) ═══ */
+document.getElementById('exportBtn').onclick = () => {
+  let md = '## _audit.html 측정 증거 (dev-only · 무빌드)\n\n';
+  md += '### A. 대비 실측 (APCA AND WCAG)\n\n';
+  if (lastContrastRows.length) {
+    md += '| 표본 | 역할 | 전경 | 배경 | APCA Lc | WCAG | 판정 |\n|---|---|---|---|---:|---:|---|\n';
+    for (const r of lastContrastRows)
+      md += `| ${r.sample} | ${r.role} | ${r.fg} | ${r.bg} | ${r.lc} | ${r.ratio} | ${r.ok?'PASS':'**FAIL**'} |\n`;
+  } else md += '_측정 안 됨_\n';
+  md += '\n### B. 토큰 lint\n\n';
+  if (lastLint) {
+    md += lastLint.ok ? `BLOCK 0건, WARN ${lastLint.warn.length}건 — PASS\n\n` : `BLOCK ${lastLint.block.length}건 — **출고 금지**\n\n`;
+    if (lastLint.block.length) { md += '| 등급 | 유형 | 상세 |\n|---|---|---|\n';
+      for (const b of lastLint.block) md += `| BLOCK | ${b.type} | ${b.detail} |\n`; }
+  } else md += '_lint 안 됨_\n';
+  md += '\n### C. CVD 3종\n\n';
+  if (lastCvdRows.length) {
+    md += '| 토큰 | 정상 | protan | deutan | tritan |\n|---|---|---|---|---|\n';
+    for (const p of lastCvdRows)
+      md += `| ${p.name} | ${p.hex} | ${cvdHex(p.hex,'protan')} | ${cvdHex(p.hex,'deutan')} | ${cvdHex(p.hex,'tritan')} |\n`;
+  } else md += '_CVD 표 없음_\n';
+  const out = document.getElementById('exportOut');
+  out.value = md;
+  out.select();
+  try { navigator.clipboard.writeText(md); } catch (e) {}
+};
+
+function escapeHtml(s) { return String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+</script>
+</body>
+</html>

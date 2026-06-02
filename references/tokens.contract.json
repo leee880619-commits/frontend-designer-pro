@@ -1,0 +1,52 @@
+{
+  "$comment": "머신 판독용 미러. 사람용 SSOT는 references/_contract.md. 둘은 동기화되어야 하며 tools/kb-consistency-check.sh가 단일값을 단언한다. dev-only · 사용자 산출물 폴더 미포함.",
+  "version": "1.0.0",
+  "motion": {
+    "--motion-duration-fast": "120ms",
+    "--motion-duration-base": "200ms",
+    "--motion-budget-max": "250ms",
+    "--motion-reduce-default": "1"
+  },
+  "focus": {
+    "--focus-ring-color": "var(--color-brand-500)",
+    "--focus-ring-width": "2px",
+    "--focus-ring-offset": "2px",
+    "--target-size-min": "24px"
+  },
+  "contrast": {
+    "body":      { "apcaLc": 75, "wcag": 4.5 },
+    "secondary": { "apcaLc": 60, "wcag": 4.5 },
+    "large_ui":  { "apcaLc": 45, "wcag": 3 },
+    "disabled":  { "apcaLc": 30, "wcag": 0 }
+  },
+  "naming": {
+    "referencePrefixes": ["--color-", "--space-", "--font-", "--line-", "--radius-", "--shadow-", "--duration-"],
+    "isRefRegex": "^--color-|^--space-|^--font-|^--line-|^--radius-|^--shadow-|^--duration-",
+    "vizNamespace": ["--color-viz-categorical-1..8", "--color-viz-sequential-*", "--color-viz-diverging-*", "--color-viz-grid", "--color-viz-axis", "--color-viz-annotation"],
+    "vizCategoricalMax": 8,
+    "brandReference": "--color-brand-500",
+    "forbidden": ["--ref-*", "--color-accent-* (as reference)", "--color-viz-accent", "--color-viz-neutral"]
+  },
+  "a11yPrimaryTokens": [
+    "--focus-ring-color",
+    "--focus-ring-width",
+    "--focus-ring-offset",
+    "--motion-duration-fast",
+    "--motion-duration-base",
+    "--motion-reduce",
+    "--target-size-min"
+  ],
+  "lintGrades": {
+    "DANGLING": "BLOCK",
+    "CIRCULAR": "BLOCK",
+    "ORPHAN": "WARN",
+    "HARDCODE": "BLOCK",
+    "A11Y-MISS": "BLOCK",
+    "$note": "ORPHAN과 HARDCODE는 a11yPrimaryTokens를 면제한다."
+  },
+  "lang": {
+    "default": "ko",
+    "parameterizable": true,
+    "placeholder": "{{LANG}}"
+  }
+}
