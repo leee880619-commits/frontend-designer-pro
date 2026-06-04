@@ -556,7 +556,15 @@ function buildCvd(def) {
 
 /* ═══ D. 마크다운 증거 내보내기 (redteam 입력) ═══ */
 document.getElementById('exportBtn').onclick = () => {
+  // 자기증명 헤더(개정 A-2): 입력 지문 + 측정 시각 — redteam(코드 미실행)이 "이 표가 정말 현재 산출물에서,
+  // 직전 수정 이후에 나왔는지"를 손으로 확인하게 한다(측정 SPOF의 입력결합 층 차단, design-redteam-pro §4-b).
+  const cssText = document.getElementById('cssInput').value || '';
+  const frameSig = (frame.getAttribute('src') || '') + '' + JSON.stringify(lastContrastRows);
+  const fingerprint = 'css' + fnv1a(cssText) + '-dom' + fnv1a(frameSig);
+  let ts; try { ts = new Date().toISOString(); } catch (e) { ts = '(시각 미상)'; }
   let md = '## _audit.html 측정 증거 (dev-only · 무빌드)\n\n';
+  md += `> **자기증명 헤더** · 입력 지문: \`${fingerprint}\` · 측정 시각: ${ts}\n`;
+  md += '> redteam 검증(design-redteam-pro §4-b): 이 지문이 현재 산출물(tokens.css + 로드된 index.html)에서 나왔는지, 시각이 직전 수정 이후인지 확인. A의 raw 전경/배경 색쌍은 §3.2 식 손계산 교차검증용.\n\n';
   md += '### A. 대비 실측 (APCA AND WCAG)\n\n';
   if (lastContrastRows.length) {
     md += '| 표본 | 역할 | 전경 | 배경 | APCA Lc | WCAG | 판정 |\n|---|---|---|---|---:|---:|---|\n';
@@ -582,6 +590,9 @@ document.getElementById('exportBtn').onclick = () => {
 };
 
 function escapeHtml(s) { return String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+// FNV-1a 32bit 해시 (라이브러리 0·무빌드·file:// 안전 — SubtleCrypto 불요). 입력 지문 생성용(개정 A-2 자기증명 표).
+// 측정 함수(apcaLc/wcagRatio/lintTokens)와 무관한 _audit.html 고유 함수라 references와 동기 대상 아님.
+function fnv1a(str){let h=0x811c9dc5;const s=String(str);for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,0x01000193);}return (h>>>0).toString(16).padStart(8,'0');}
 </script>
 </body>
 </html>
