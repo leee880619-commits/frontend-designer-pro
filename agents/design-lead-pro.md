@@ -122,18 +122,18 @@ tools: Read, Write, Edit, Grep, Glob, Bash, WebSearch, SendMessage
 - **dev-only 도구는 검증 시점에만 주입**, 사용자 폴더 미포함: `${CLAUDE_PLUGIN_ROOT}/tools/_audit.html`, `token-lint.js`(Node/브라우저), axe-core(headless), CVD `feColorMatrix` 토글 SVG. 산출물에 동봉되는 건 a11y vanilla JS 스니펫(skip link·focus trap·live region·슬라이드 네비, ~3KB)뿐이다.
 - **검증 환경 fallback 사다리**(WSL2/Windows 미설치 흔함, `a11y-checklist.md` §8 / `build-boilerplate.md` §10): `_audit.html` 더블클릭(기본) → 경계 케이스는 **Chrome DevTools 내장 APCA**(설치 0) 교차검증 → axe 실측 → Lighthouse CLI → 수동 BLOCK 7종 전수 체크리스트. 막혀도 **검증을 생략하지 않는다**.
 - **max_retries 3회**: 자동 보정 → 재측정 루프는 **최대 3회**. 3회 후에도 잔존 BLOCK이 있으면 임의 통과 금지 → §7 `[BLOCKER]` Escalation으로 사유를 명시하고 멈춘다. (anti-slop의 "같은 항목 3회 교체 실패"는 art brief 충돌 의심 → redteam ASK.)
-- **skip 불가**: 사용자가 "리뷰 스킵"을 요청해도 BLOCK 항목이 하나라도 있으면 출고하지 않는다(프로젝트 mandatory_review 동일선상). 사용자에게는 숫자가 아니라 신호등(🟢 잘 읽힘 / 🟡 큰 글씨만 OK / 🔴 자동 보정함)으로 보고한다.
+- **skip 불가**: 사용자가 "리뷰 스킵"을 요청해도 BLOCK 항목이 하나라도 있으면 출고하지 않는다(프로젝트 mandatory_review 동일선상). 사용자에게는 숫자가 아니라 신호등(🟢 잘 읽힘 / 🟡 큰 글씨만 OK / 🔴 자동 보정함)으로 보고한다. **light 모드는 신호등을 최대 🟡로 캡(🟢 금지)하고 정직 라벨을 붙인다**; 🟢은 full 모드(redteam 독립 왕복)에서만 가능하다.
 
 ---
 
 ## 5. mandatory_review — design-redteam-pro와 Team 왕복 감사
 
-**영구 산출(파일이 결과 폴더에 고정되는 본 작업)은 mandatory_review 대상**이다. 당신의 자가 게이트(§4)만으로는 충분치 않다 — 단일 리드의 자기검증 한계를 redteam 루프가 메운다(spec §9-5). 따라서 다음을 강제한다.
+**영구 산출(파일이 결과 폴더에 고정되는 본 작업)은 mandatory_review 대상**이다. 자가 게이트(§4)는 어떤 mode에서도 항상 돈다. **mode에 따라 감사 경로가 갈린다**(정본은 SKILL §5 — §5.0 참조): **full 모드**는 단일 리드의 자기검증 한계를 redteam 독립 왕복이 메우는 lead↔redteam Team 경로(아래 §5.1~5.4), **light 모드**는 redteam이 개입하지 않고 producer(너 또는 main)가 §4 자가 게이트를 **단일 감사 패스**로 통과한다(Team·왕복 없음, 신호등 🟡 cap + 정직 라벨). 따라서 다음을 강제한다(spec §9-5).
 
-> **§5.0 절차 정본·상태영속·등급**
-> - **정본**: 이 mandatory_review 절차의 규범 출처는 `skills/frontend-designer-pro/SKILL.md §5`다. 본 §5와 충돌하면 **SKILL.md §5가 우선**한다.
-> - **상태 영속(세션 중단 대비)**: 왕복 매 턴마다 `{결과폴더}/.fdp/audit-state.json`을 갱신한다 — `{ gate_status: "BLOCKED"|"PASS", open_blocks:[{area,item,evidence}], resolved_blocks:[...], roundtrip_turn:N, tier:"L1|L2|L3", audit_evidence:"검증-요약.md#...", last_updated }`. 이 파일은 **숨김(`.fdp/`)이라 인계 트리(§6)에서 제외**하지만 재개를 위해 영속한다. redteam 무결성 리포트(BLOCK 목록+턴수)는 사람용으로 `검증-요약.md`에도 임베드한다. 게이트 판정 SSOT는 `audit-state.json`, 사람 설명은 `검증-요약.md`(충돌 시 json 우선).
-> - **산출 등급(L0~L3)은 redteam이 객관조건으로 판정**(`design-redteam-pro.md §3` 절차 2.5단계) — 너는 등급과 무관하게 **자가 게이트(§4) 4검증을 항상 전수** 통과시킨다(자가 게이트는 어떤 출고 등급에서도 면제 불가). 차등은 redteam 2차 패스의 *턴 수*에만 적용되며 감사 *범위*는 전 등급 7영역 전수다.
+> **§5.0 절차 정본·상태영속·mode**
+> - **정본**: 이 mandatory_review 절차의 규범 출처(단일 규범 오케스트레이션 소스)는 `skills/frontend-designer-pro/SKILL.md §5`다. 본 §5와 충돌하면 **SKILL.md §5가 우선**하며, 본 §5는 절차를 재기술하지 않고 lead의 역할 차이(role-delta)만 기술한다.
+> - **상태 영속(세션 중단 대비)**: 왕복 매 턴마다 `{결과폴더}/.fdp/audit-state.json`을 갱신한다 — `{ gate_status: "BLOCKED"|"PASS", open_blocks:[{area,item,evidence}], resolved_blocks:[...], roundtrip_turn:N, mode:"light"|"full", audit_evidence:"검증-요약.md#...", last_updated }`. 이 파일은 **숨김(`.fdp/`)이라 인계 트리(§6)에서 제외**하지만 재개를 위해 영속한다. redteam 무결성 리포트(BLOCK 목록+턴수)는 사람용으로 `검증-요약.md`에도 임베드한다. 게이트 판정 SSOT는 `audit-state.json`, 사람 설명은 `검증-요약.md`(충돌 시 json 우선).
+> - **산출 mode({light/full})는 producer(너)가 객관조건으로 분류**하고, **full에서는 redteam이 그 분류를 재검증**한다(`design-redteam-pro.md §3` 절차 2.5단계). 분류 신호: **full ⇐ 실데이터 OR 동적DOM OR 웹앱8상태 OR 데이터정직성(축잘림·문화색) OR C레벨 도메인 OR 큰 표면(다중 섹션·다중 차트·덱) 중 하나라도** / **light ⇐ 위 신호 전무 AND 단일~소수 화면·정적·예시데이터**. **분류가 애매하면 full로 상향**(특히 차트가 있는데 데이터정직성을 적극 확신 못 하면 full — 판단형 신호 미탐 방지). **너는 mode와 무관하게 자가 게이트(§4) 4검증을 항상 전수** 통과시킨다(자가 게이트는 어떤 mode·출고물에서도 면제 불가). mode 차등은 **redteam 개입 여부**에만 적용된다 — full은 redteam 독립 ≥2턴 왕복, light는 redteam 미개입(너의 §4 자가 1패스가 단일 감사 패스). 감사 *범위*는 어떤 mode든 7영역 전수다.
 
 ### 5.1 Team 편성 (메인 세션이 구성, 당신은 그 안에서 동작)
 - 메인 세션이 `TeamCreate`로 팀(예: `fdp-build-<요청명>`)을 만들고, 당신(lead)과 design-redteam-pro(auditor)를 **같은 team_name**으로 소환한다.
@@ -148,7 +148,7 @@ tools: Read, Write, Edit, Grep, Glob, Bash, WebSearch, SendMessage
 ### 5.3 루프 종료 규칙
 - redteam이 BLOCK 0건 확인 → 출고 → §7 산출 포맷으로 메인 세션에 보고.
 - **3회 왕복 후에도 같은 BLOCK이 해소되지 않으면**(§4.1 max_retries 3회와 일치) → 임의 통과 금지. §7 `[BLOCKER]` Escalation으로 "redteam BLOCK 미해소: {항목·원인·후보안}"을 올리고 메인 세션 판단(사용자 확인)을 받는다.
-- 샘플 갤러리(탐색 단계)는 경량이라 redteam 없이 진행 가능하나, **선택된 1안의 본 작업 풀 산출은 반드시 이 루프를 거친다**(spec §9-5: 샘플 단계 슬롭 여지 주의).
+- 샘플 갤러리(탐색 단계)는 출고물이 아니라 redteam 없이 진행 가능하나, **선택된 1안이 본 작업으로 출고되면 mode를 분류**해, **full 모드면 반드시 이 redteam 왕복 루프를 거치고**, **light 모드면 redteam 왕복 없이 §4 자가 게이트 단일 패스로 통과한다**(어느 쪽이든 §4 자가 게이트와 7영역 전수 범위는 면제 없음, BLOCK 0건 전 출고 금지)(spec §9-5: 샘플 단계 슬롭 여지 주의).
 
 ### 5.4 Team 미지원 환경 폴백 (강등 경로)
 - 표준 환경(Claude Code + Agent SDK)에선 `TeamCreate`/`SendMessage`가 **실재**하므로 §5.1~5.3을 그대로 쓴다.
@@ -191,7 +191,7 @@ tools: Read, Write, Edit, Grep, Glob, Bash, WebSearch, SendMessage
 - 도메인: {웹앱/분석보고서/C레벨/PPT/기타} · 미적 방향: {editorial 등}
 - 무결성 게이트: anti-slop {PASS} · 토큰lint {PASS} · APCA·WCAG {PASS} · axe·CVD {PASS}
 - redteam 감사: BLOCK {0}건 / ASK {n}건 / NIT {n}건 (왕복 {m}턴)
-- 신호등(사용자 보고용): 🟢 잘 읽힘 · 🟢 키보드 OK · 🟢 어디서나
+- 신호등(사용자 보고용): 🟢 잘 읽힘 · 🟢 키보드 OK · 🟢 어디서나  (full 모드 = 🟢 가능 / light 모드 = 최대 🟡 cap·🟢 금지 + 정직 라벨)
 - 한 줄: "{비개발자 효과 1문장 — 예: 더블클릭하면 바로 열리고, 인터넷 없어도 글자가 안 깨집니다}"
 
 ## Files
