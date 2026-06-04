@@ -51,6 +51,14 @@ Claude Code 안에서 아래 두 줄을 입력합니다.
 
 설치가 끝나면 Claude Code에서 `/frontend-designer-pro`가 자동완성 목록에 나타납니다.
 
+### 업데이트 알림 (v1.3.0부터)
+
+**v1.3.0부터** 새 버전이 올라오면 Claude Code(CLI)를 켤 때 알림이 뜹니다. 세션을 시작하면 GitHub의 최신 버전을 조용히 확인해(6시간에 한 번, 실패해도 세션은 멈추지 않음), 더 새 버전이 있으면 한 줄로 알려 드립니다. 알림이 뜨면 `/plugin` 메뉴에서 업데이트하세요.
+
+> **처음 한 번은 수동 업데이트가 필요합니다.** v1.2.0 이하를 쓰던 분은 이 알림 기능이 없으므로, 한 번은 직접 `/plugin` 메뉴에서 업데이트해 v1.3.0 이상을 받아야 그 다음부터 자동 알림이 작동합니다.
+>
+> 자동 확인을 끄려면 환경변수 `FDP_NO_UPDATE_CHECK=1`을 설정하세요.
+
 ---
 
 ## 사용법
@@ -111,6 +119,9 @@ frontend-designer-pro/
 ├── agents/
 │   ├── design-lead-pro.md       ← 본 작업 산출 담당
 │   └── design-redteam-pro.md    ← 내보내기 전 무결성 감사 담당
+├── hooks/                       ← 세션 시작 시 업데이트 알림(v1.3.0+)
+│   ├── hooks.json               ← SessionStart 훅 등록
+│   └── check-update.js          ← 최신 버전 확인(6h 1회·비차단·실패 무시)
 ├── references/                  ← 자기완결 지식 번들 (외부 스킬 없이 동작)
 │   ├── _block-card.md           ← [항상 참조] 하드 게이트 1페이지(무엇이 BLOCK인지)
 │   ├── _contract.md             ← [항상 참조] 상수·대비 임계·토큰명 단일 기준
