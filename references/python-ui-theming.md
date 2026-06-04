@@ -180,7 +180,7 @@ app/
 
 ---
 
-## 5. 기존 앱 개선 절차 (improve — 전신 `improve-ui`가 하던 일)
+## 5. 기존 앱 개선 절차
 
 사용자가 **이미 동작하는** Streamlit/Gradio/Dash/FastAPI 앱의 룩을 올려달라고 하면:
 
