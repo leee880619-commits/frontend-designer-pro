@@ -5,13 +5,13 @@
   },
   "metadata": {
     "description": "전문가-프론트엔드 디자이너 마켓플레이스 — 비개발자도 전문가급 프론트엔드 산출물을 얻는 적응형 디자인 스킬",
-    "version": "1.0.0"
+    "version": "1.0.1"
   },
   "plugins": [
     {
       "name": "frontend-designer-pro",
       "source": "./",
-      "description": "비개발자도 전문가급 프론트엔드 산출물(웹앱·분석보고서·C레벨 보고서·발표 덱 HTML)을 얻는 단일 적응형 디자인 워크플로우. 질문게이트 → 의도판단 → 선택형 샘플갤러리 → 도메인 분기 → 저장. 6인 전문가 오케스트레이션, 자기완결 지식 번들.",
+      "description": "비개발자도 전문가급 프론트엔드 산출물(웹앱·분석보고서·C레벨 보고서·발표 덱 HTML·Python 웹앱 Streamlit/Gradio/Dash/FastAPI)을 얻는 단일 적응형 디자인 워크플로우. 질문게이트 → 의도판단 → 선택형 샘플갤러리 → 도메인 분기 → 저장. 6인 전문가 오케스트레이션, 자기완결 지식 번들.",
       "category": "design",
       "keywords": [
         "frontend",
@@ -20,7 +20,10 @@
         "ux",
         "report",
         "presentation",
-        "accessibility"
+        "accessibility",
+        "streamlit",
+        "gradio",
+        "python"
       ],
       "license": "MIT",
       "homepage": "https://github.com/leee880619-commits/frontend-designer-pro"
