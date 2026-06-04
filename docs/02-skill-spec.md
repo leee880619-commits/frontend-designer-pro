@@ -115,6 +115,8 @@ frontend-designer-pro는 "비개발자도 전문가급 프론트엔드 산출물
 
 ## 5. 런타임 오케스트레이션
 
+> **(v1.4.0 갱신 — `skills/frontend-designer-pro/SKILL.md §5`가 런타임 정본)** mandatory_review는 **경량(light)/본격(full) 2모드로 분기**한다: 경량(단일~소수 화면·정적·예시데이터)은 redteam 왕복 없이 §7 게이트 1회 자가 측정(신호등 🟡 cap + 정직 라벨), 본격(실데이터·동적DOM·웹앱8상태·데이터정직성·C레벨·큰 표면 또는 분류 애매)은 lead↔redteam 독립 ≥2턴 왕복(🟢 가능). 아래 서술은 본격 경로 기준의 설계 청사진이며, 충돌 시 SKILL §5가 우선한다.
+
 - **접근**: 메인 세션은 의도 해석·라우팅·질문·검수·보고만. 대규모 산출은 design-lead-pro에 위임(메인 직접 수행 3파일·500줄 이하). **6인 전문가는 상시 에이전트가 아니라 SKILL.md 내부 '6 전문가 렌즈(lens)' 인라인 체크리스트**로, 단일 design-lead-pro가 순차 적용(컨텍스트 절약). 영구 산출(mandatory_review)이면 TeamCreate로 **design-lead-pro ↔ design-redteam-pro 감사 루프** 강제(BLOCK 왕복 ≥2턴). 샘플 갤러리는 경량이라 메인/lead 단독 가능.
 - **병렬화**: 샘플 N개 시안은 독립이라 병렬 생성(완전 병렬 독립). 무결성 게이트 3검증(토큰lint / APCA·WCAG / axe·CVD)은 독립이라 병렬 후 단일 리포트 통합. code-researcher 선호출은 단독 1회 병렬. 복합 도메인은 도메인별 병렬 분기 후 통합.
 - **컨텍스트 절약**: 6 렌즈를 6 에이전트로 상시 소환 안 함(인라인화). 대형 위임 run_in_background:true 기본. references/는 에이전트가 필요 시점에만 Read. 산출물 파일이 SSOT라 Team 완료 후 TeamDelete, 대화에 전문 안 실음. 첨부·중간 요약만 메인에, 전문은 파일로 고정.
