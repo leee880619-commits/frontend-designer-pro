@@ -1,6 +1,6 @@
 ---
 name: frontend-designer-pro
-version: 1.4.0
+version: 1.4.1
 description: 전문가-프론트엔드 디자이너. /frontend-designer-pro 호출 시 이 단일 적응형 워크플로우를 실행한다. 비개발자도 전문가급 프론트엔드 산출물(웹앱·공유용 분석보고서·C레벨 보고서·발표 PPT 덱(HTML)·Python 웹앱(Streamlit/Gradio/Dash/FastAPI)·기타)을 얻도록, 질문 게이트(무조건·1회·그림·★추천) → 의도 판단·art brief(방향 합의문 한 장) → 선택형 샘플 갤러리 → 도메인별 전문 분기 산출 → 산출 직전 단일 무결성 게이트(BLOCK) → 저장·인계 보고 순으로 진행한다. 6인 전문가(아트디렉터·디자인시스템·색채과학·접근성/UX·데이터시각화·구현엔지니어)를 내부 렌즈 체크리스트로 순차 적용하며, 외부 스킬 미설치에도 references/ 자기완결 지식으로 동작한다.
 license: MIT
 allowed-tools: Read, Write, Edit, Grep, Glob, AskUserQuestion, Task, WebSearch, Bash, TeamCreate, TeamDelete, SendMessage, TaskCreate, TaskUpdate
