@@ -133,7 +133,7 @@ semantic은 **"이 값이 어디에 쓰이는가(역할)"** 에 이름을 붙이
 | 2 | `--focus-ring-width` | 그 테두리 **굵기** | `2px` |
 | 3 | `--focus-ring-offset` | 테두리와 요소 사이 **간격** | `2px` |
 | 4 | `--motion-duration-fast` | 짧은 애니메이션 **길이** | `120ms` |
-| 5 | `--motion-duration-base` | 보통 애니메이션 **길이** | `200ms` (모션 예산 ≤250ms 준수) |
+| 5 | `--motion-duration-base` | 보통 애니메이션 **길이** | `200ms` (기능 UI 피드백 기본값 -- 상한 아님; 장식 모션은 길이-반복 자유) |
 | 6 | `--motion-reduce` | "움직임 줄이기" 켜졌을 때 **0으로 만드는 플래그** | `1` (기본) / reduced 시 `0` |
 | 7 | `--target-size-min` | 손가락으로 누를 **최소 터치 크기** | `24px` (권장 44px) |
 
@@ -150,7 +150,7 @@ semantic은 **"이 값이 어디에 쓰이는가(역할)"** 에 이름을 붙이
   --focus-ring-width: 2px;
   --focus-ring-offset: 2px;
   --motion-duration-fast: 120ms;
-  --motion-duration-base: 200ms;   /* 모션 예산 ≤250ms */
+  --motion-duration-base: 200ms;   /* 기능 UI 피드백 기본값(상한 아님). 장식 모션은 길이-반복 자유 */
   --motion-reduce: 1;              /* 1=모션 허용, 0=정지 */
   --target-size-min: 24px;        /* 권장 44px */
 }

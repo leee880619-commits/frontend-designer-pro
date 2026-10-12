@@ -10,13 +10,14 @@
 
 ## 1. 모션 (motion)
 
-| 상수 | 확정값 | 예산 상한 | 비고 |
-|------|--------|-----------|------|
-| `--motion-duration-fast` | **120ms** | — | 짧은 마이크로 인터랙션 |
-| `--motion-duration-base` | **200ms** | **≤250ms** | 보통 애니메이션. 예산 상한(250ms)과 기본값(200ms)은 다른 개념 — 기본값은 200ms로 단일 확정 |
-| `--motion-reduce` | `1`(허용) / reduced 시 `0` | — | `@media (prefers-reduced-motion: reduce)`에서 0 |
+| 상수 | 확정값 | 적용 | 비고 |
+|------|--------|------|------|
+| `--motion-duration-fast` | **120ms** | 기능 UI 피드백 기본값 | 짧은 마이크로 인터랙션(반응 지연 없는 느낌) |
+| `--motion-duration-base` | **200ms** | 기능 UI 피드백 기본값 | 보통 기능 전환의 권장 기본값 |
+| `--motion-reduce` | `1`(허용) / reduced 시 `0` | 성역(BLOCK) | `@media (prefers-reduced-motion: reduce)`에서 0 |
 
-> 모션 예산 규율: **1회·≤250ms·reduced 0**(`anti-slop-checklist.md`·`a11y-checklist.md` §5.2).
+> **모션 규율(완화됨 -- 화려함 허용)**: `<=250ms` 상한과 "진입 1회 / 무한 금지" 규칙은 **장식 모션에서 제거**한다. `--motion-duration-fast`(120ms)-`--motion-duration-base`(200ms)는 **기능적 UI 피드백의 기본값**으로 유지(상한이 아니라 권장 기본). **장식 모션**(스크롤리빌-카운트업-패럴랙스-앰비언트 루프)은 **지속 시간 제한 없이, 반복(루프)도 허용**한다.
+> **유지(성역-BLOCK)**: `--motion-reduce` 0과 `@media (prefers-reduced-motion: reduce)` 폴백은 **필수**다(접근성). 장식 모션이 아무리 길거나 루프해도 reduced-motion 폴백 누락은 BLOCK(`anti-slop-checklist.md` A9-`a11y-checklist.md` §5.2).
 
 ## 2. 포커스 (focus)
 

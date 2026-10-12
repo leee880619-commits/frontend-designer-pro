@@ -4,8 +4,9 @@
   "motion": {
     "--motion-duration-fast": "120ms",
     "--motion-duration-base": "200ms",
-    "--motion-budget-max": "250ms",
-    "--motion-reduce-default": "1"
+    "--motion-reduce-default": "1",
+    "decorativeMotion": { "maxDuration": null, "loopAllowed": true },
+    "$note": "fast/base are DEFAULTS for functional UI feedback only, not a ceiling. Decorative motion (scroll-reveal, count-up, parallax, ambient loops) may be any duration and may loop. The only mandatory motion rule is the prefers-reduced-motion fallback: --motion-reduce -> 0."
   },
   "focus": {
     "--focus-ring-color": "var(--color-brand-500)",

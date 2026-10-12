@@ -57,16 +57,17 @@ grep -niE "undraw|storyset|drawkit|blob|illustration|hero-image|placeholder" *.h
 grep -niE "background: *#(fff|f[0-9a-f]f[0-9a-f]?f?|fafafa|f5f5f5|eee)|border: *1px +solid +#(ddd|eee|e[0-9a-f]e[0-9a-f])" *.html *.css
 grep -niE "box-shadow: *0 +[0-9]+px +[0-9]+px +rgba\(0, *0, *0, *0\.0?[0-9]" *.html *.css   # 흔한 0,0,0,0.0x 회색 그림자
 
-# A7 accent 3개+ 남발(60-30-10 위반) — accent 토큰/색 사용처가 3종 이상
-grep -nioE "var\(--color-accent[^)]*\)|--accent-?[0-9a-z]*" *.html *.css | sort -u   # 서로 다른 accent 변수 수 세기
-grep -ncE "var\(--color-(brand|accent)" *.html   # 강조색 총 사용 횟수(과다 출현 신호)
+# A7 (완화됨 -- BLOCK 아님) accent 다색/대담 팔레트는 허용. 60-30-10은 비차단 제안.
+# 아래는 참고용 스캔일 뿐 적발 도구가 아니다(다색 자체는 위반이 아니다).
+grep -nioE "var\(--color-accent[^)]*\)|--accent-?[0-9a-z]*" *.html *.css | sort -u   # 서로 다른 accent 변수 수(참고)
+grep -ncE "var\(--color-(brand|accent)" *.html   # 강조색 총 사용 횟수(참고)
 
 # A8 명사구 차트 제목 — <figcaption>/차트 title이 "월별 매출" 같은 명사구(동사·결론 없음)
 grep -niE "<figcaption[^>]*>|<h[2-6][^>]*>.{0,40}(현황|추이|분포|비율|통계|매출|지표|데이터)</" *.html
 
-# A9 무의미 통통 모션 — bounce/pulse/wobble/float 무한 반복, 의미 없는 scale 키프레임
-grep -niE "animation[^;]*(bounce|pulse|wobble|float|shake|infinite)|@keyframes +(bounce|pulse|wobble|float)" *.html *.css
-grep -niE "transition[^;]*[0-9]+ms[^;]*ease.*all|animation-duration: *[3-9][0-9]{2,}ms|animation-duration: *[0-9.]+s" *.html *.css  # 250ms 초과·all 트랜지션
+# A9 (완화됨 -- 장식 모션은 허용) 스크롤리빌-카운트업-패럴랙스-앰비언트 루프는 길이-반복 제한 없음.
+# 유일한 BLOCK은 reduced-motion 폴백 누락 -- 그것만 잡는다.
+grep -niE "@media \(prefers-reduced-motion" *.html *.css  # reduced-motion 폴백이 있나?(없으면 A9 BLOCK)
 ```
 
 > **한계**: grep은 보라색 색상각(H)이나 "균등함"을 완벽히 잡지 못한다. 1차 후보를 §2 정의로 사람이 확정한다. 색 판정이 애매하면 `color-token-contract.md`의 OKLCH H값(보라≈270~330)으로 역산해 확인한다.
@@ -75,13 +76,15 @@ grep -niE "transition[^;]*[0-9]+ms[^;]*ease.*all|animation-duration: *[3-9][0-9]
 
 ## 2. BLOCK 항목 9선 (각: 징후 / 왜 slop인가 / 교체안)
 
-### A1. 보라 그라데이션 on 화이트 (Purple gradient on white)
+### A1. (완화됨 - BLOCK 아님 - 비권장 메모) 보라 그라데이션 on 화이트 (Purple gradient on white)
+
+> **이 항목은 더 이상 BLOCK이 아니다.** 그라데이션은 다중 정지점-비비드 포함 **의도적 선택으로 일반 허용**한다(화려함 잠금 해제). 아래는 출고를 막지 않는 **연성 권고(advisory)** 일 뿐이다.
 
 | 구분 | 내용 |
 |------|------|
-| **징후** | 흰/거의 흰 배경 위, 인디고~보라(H≈270~300) 계열 `linear-gradient`. 특히 버튼·hero 배경·카드 헤더에 보라→파랑 또는 보라→분홍 그라데이션. `#6366f1`, `#8b5cf6`, `#a855f7` 류 + `linear-gradient(135deg, ...)`. |
-| **왜 slop인가** | 2021~2024 노코드/AI 스타터 템플릿(Vercel·Linear 모방 다수)의 사실상 디폴트. "방금 부트스트랩한 SaaS" 인상을 줘 **의도성이 0**으로 읽힌다. 보라 그라데이션은 브랜드 의미가 아니라 "고를 줄 몰라서 고른 색"의 대명사가 됐다. |
-| **교체안** | (1) **단색 + 면 대비**로 전환: 그라데이션 대신 art brief 무드 색 1개의 평면 채움. 깊이는 그라데이션이 아니라 **여백·크기·굵기**로 만든다(skill-spec §0-2). (2) 그라데이션이 꼭 필요하면 **동일 색상각 내 명도 그라데이션**(예: 같은 H, L만 차이)으로 한정하고 채도를 art brief의 data/expression zone 규칙에 맞춘다. (3) 색은 임의 hex가 아니라 `var(--color-brand-500)` 등 토큰에서만(`token-system.md`, raw hex 금지). (4) 보라가 정말 브랜드 색이라면 art brief에 그 근거 1문장을 박는다 — 근거 없는 보라는 BLOCK. |
+| **연성 권고** | 그라데이션 자체는 자유다. 다만 "인디고/보라 그라데이션 on 평범한 흰 SaaS-hero"(`#6366f1`/`#8b5cf6`/`#a855f7` + `linear-gradient(135deg, ...)`)는 2021~2024 노코드/AI 스타터 템플릿에서 과용된 클리셰라, **기본으로는 피하기를 권한다**(다른 색-각도-구성으로 차별화하면 더 좋다). 이는 권고이지 BLOCK이 아니다. |
+| **자유 허용** | 대담한 다색 그라데이션, gradient mesh, 비비드 채움, 그라데이션 버튼-hero-카드 헤더 모두 허용. 색은 토큰에서 뽑는 것을 권장하나(`token-system.md`) 이 미적 선택 자체로는 출고를 막지 않는다. |
+| **유지되는 성역** | 그라데이션/이미지 위에 **텍스트**가 올라오면 대비는 여전히 APCA AND WCAG 이중 게이트의 성역이다(가장 불리한 지점에서 측정). 미적 자유는 장식 면에, 텍스트 대비는 불변. |
 
 ### A2. 기본 폰트 방치 (Inter / Roboto / system 무개입)
 
@@ -123,13 +126,16 @@ grep -niE "transition[^;]*[0-9]+ms[^;]*ease.*all|animation-duration: *[3-9][0-9]
 | **왜 slop인가** | 순수 무채색 회색은 "색 결정을 안 했다"는 디폴트다. 사람이 다듬은 UI는 중성색에도 **미세한 색온도**(따뜻한 회색/차가운 회색, OKLCH로 약한 C 부여)를 넣어 무드를 입힌다. 회색 박스 천국은 슬롭의 배경음이다. |
 | **교체안** | (1) **중성색에 색온도 주입**: `color-token-contract.md`의 OKLCH 앵커에서 brand H를 살짝 머금은 회색 램프 파생(예: 차가운 무드면 H≈250의 C≈0.01 회색). 순수 `#808080` 금지. (2) **면 분리는 그림자가 아니라 배경 명도 단차 + 여백**으로(skill-spec §0-2). 모든 카드 동일 그림자는 위계를 안 만든다 — 강조 카드만 그림자/테두리 차별. (3) 테두리·배경·그림자가 다 회색이면 최소 1개를 무드 색으로 교체(예: 강조 카드 좌측 2px brand 보더). (4) 모든 색은 토큰에서만(raw hex 금지, `token-system.md`). |
 
-### A7. accent 3개+ 남발 (60-30-10 위반)
+### A7. (완화됨 - BLOCK 아님 - 비차단 제안) accent 다색-60-30-10
+
+> **이 항목은 더 이상 BLOCK이 아니다.** accent 개수 캡(<=2 앵커)-면적 캡(<=10%)-"3개 이상 = BLOCK"을 **모두 제거**한다. 대담한 색-다색(multi-accent) 팔레트를 **허용**한다(화려함 잠금 해제). 60-30-10은 **비차단 균형 제안**으로 남는다.
 
 | 구분 | 내용 |
 |------|------|
-| **징후** | 한 화면에 서로 다른 강조색(accent)이 3종 이상 — 파랑 버튼 + 초록 배지 + 주황 알림 + 보라 링크가 다 동시에 진하게. 60-30-10 비율(중성 60 / 보조 30 / 강조 10)이 깨져 강조색 면적이 10%를 크게 넘음. |
-| **왜 slop인가** | "모든 게 강조면 아무것도 강조가 아니다." accent 남발은 **시선 우선순위를 설계하지 않은** 슬롭이다. 색이 많을수록 전문성이 아니라 미숙함으로 읽힌다. 60-30-10은 skill-spec §4.3·§8-3의 secure-by-default 하한선이다. |
-| **교체안** | (1) **accent 1개로 강제 축소**(C레벨·보고서는 화면당 1~2개, skill-spec §4.3). 나머지 "강조"는 중성색 + 굵기/크기로 위계. (2) 의미색(성공/경고/오류)은 accent와 **역할 분리**: 의미색은 상태 전달 전용(`color-token-contract.md` 의미 스케일), 브랜드 accent는 행동 유도 전용. (3) 색 사용 면적을 **60-30-10으로 재배분**: 중성 배경/텍스트 60%, 보조 톤 30%, brand accent ≤10%. (4) 차트 색은 별도 네임스페이스(`color.viz.categorical.1~8`, CVD안전 8색 이내, `token-system.md`) — UI accent와 섞지 않는다. |
+| **자유 허용** | 한 화면에 여러 강조색을 의도적으로 쓰는 다색 팔레트, 대담한 색면 모두 허용. accent 개수-면적에 하드 캡이 없다. |
+| **비차단 제안(선택)** | 시선 우선순위가 흐려진다고 느끼면 60-30-10(중성 60 / 보조 30 / 강조 10)을 **선택적 균형 가이드**로 참고할 수 있다 -- 그러나 이를 어겨도 BLOCK이 아니다. |
+| **여전히 권장(BLOCK 아님)** | 의미색(성공/경고/오류)은 브랜드 accent와 **역할을 분리**하면 더 명확하다(의미색=상태 전달, accent=행동 유도). 차트 색은 별도 네임스페이스(`color.viz.categorical.1~8`)로 두면 좋다. 이는 좋은 습관일 뿐 강제 게이트가 아니다. |
+| **유지되는 성역** | 색을 아무리 대담하게 써도 **텍스트-UI-의미색의 대비**는 APCA AND WCAG 이중 게이트를 통과해야 하고(불변), 의미색은 색 외 이중 인코딩(CVD 안전)이 여전히 필수다. |
 
 ### A8. 명사구 차트 제목 (Noun-phrase chart titles)
 
@@ -139,13 +145,16 @@ grep -niE "transition[^;]*[0-9]+ms[^;]*ease.*all|animation-duration: *[3-9][0-9]
 | **왜 slop인가** | 명사구 제목은 "데이터를 그려는 놨는데 **무슨 말을 하려는지는 안 정했다**"는 슬롭이다. 사람이 다듬은 보고서는 차트마다 **결론형 takeaway title**을 단다(skill-spec §4.2·§4.3, `chart-decision.md`). 독자가 "그래서 뭐?"를 스스로 풀게 두는 건 미완성이다. |
 | **교체안** | (1) **결론형 문장으로 교체**: "월별 매출" → "3분기 매출이 전년 대비 18% 증가했다", "지역별 분포" → "수요의 절반이 수도권에 집중된다". 주어+동사+핵심 수치. (2) 슬라이드/섹션은 **1주장 = 1결론 제목**(skill-spec §4.4). (3) 명사형 주제는 부제/캡션으로 내리고 제목 자리엔 결론을. (4) 결론이 안 떠오르면 그 차트가 정말 필요한지 재검토(`chart-decision.md` 데이터잉크 규율). |
 
-### A9. 무의미 통통 모션 (Gratuitous bouncy motion)
+### A9. (완화됨 - 장식 모션 허용 - reduced-motion만 BLOCK) 모션
+
+> **모션 캡을 제거했다.** "bounce/pulse/wobble/float 무한 금지", ">250ms 금지", "진입 1회" 금지를 **모두 해제**한다. **장식 모션**(scroll-reveal-count-up-parallax-앰비언트 루프)은 **길이 제한 없이, 반복(루프)도 허용**한다(화려함 잠금 해제). **유일하게 남는 BLOCK은 reduced-motion 폴백 누락**이다(접근성 성역).
 
 | 구분 | 내용 |
 |------|------|
-| **징후** | `animation: bounce/pulse/wobble/float ... infinite`로 요소가 끝없이 튀거나 둥둥 뜸. `transition: all 0.4s ease`로 모든 속성이 같이 움직임. hover 시 과한 scale(1.1+)·회전. duration이 250ms 초과거나 무한 반복. `prefers-reduced-motion` 미대응. |
-| **왜 slop인가** | 의미 없는 모션은 "움직이면 멋있어 보이겠지"라는 슬롭이다. 사람이 다듬은 모션은 **상태 변화를 설명하는 1회·짧은(≤250ms)** 움직임만 쓴다(art brief 모션 예산: 1회·≤250ms·reduced-motion 0, skill-spec §2). 무한 통통 모션은 주의를 분산시키고 접근성을 해친다(전정 장애). |
-| **교체안** | (1) **무한 애니메이션 제거**. 모션은 상태 전환(나타남·강조·피드백)에만, **1회·≤250ms**. (`build-boilerplate.md` Tier1: transform/opacity만). (2) `transition: all` → **속성 한정**(`transition: transform 180ms ease, opacity 180ms ease`). (3) hover scale은 1.02~1.04로 절제, 회전 금지. (4) **`@media (prefers-reduced-motion: reduce)` 폴백 필수** — 모션 0으로 떨어뜨림(`a11y-checklist.md`, 누락 시 axe/CVD 게이트와 별개로 여기서도 BLOCK). (5) 토큰 사용: `var(--motion-duration-base)`, raw px/ms 하드코딩은 토큰 lint(`token-system.md`)에서도 잡힌다. |
+| **자유 허용(장식 모션)** | 스크롤리빌, 카운트업, 패럴랙스, 앰비언트/무한 루프, 긴 지속 시간의 장식 애니메이션 모두 허용. hover scale-회전 등 표현적 모션도 자유. |
+| **기능 UI 피드백 기본값** | 기능적 UI 전환(상태 변화-피드백)에는 `--motion-duration-fast`(120ms)-`--motion-duration-base`(200ms)를 **기본값**으로 권장한다(반응 지연 없는 느낌). 이는 권장 기본값이지 장식 모션의 상한이 아니다. |
+| **BLOCK (유지)** | **`@media (prefers-reduced-motion: reduce)` 폴백 필수** -- reduced 사용자에게 모션 0(또는 무해)으로 떨어뜨려야 한다. 장식 모션이 아무리 길거나 루프해도 이 폴백이 없으면 **BLOCK**(전정 장애 사용자 보호, `a11y-checklist.md`-`_contract.md`의 `--motion-reduce` 0). |
+| **권장(BLOCK 아님)** | 토큰 사용(`var(--motion-duration-base)` 등)은 여전히 권장한다. raw px/ms 하드코딩은 토큰 lint(`token-system.md`)에서 별도로 다뤄진다. |
 
 ---
 
@@ -153,15 +162,17 @@ grep -niE "transition[^;]*[0-9]+ms[^;]*ease.*all|animation-duration: *[3-9][0-9]
 
 9개 항목은 모든 도메인에 적용되지만, 도메인에 따라 **특히 치명적인 항목**이 다르다. 점검 시 가중치를 둔다(skill-spec §4).
 
+> 참고: A1(그라데이션)-A7(accent)-A9(모션)는 **완화돼 더 이상 BLOCK이 아니다**(모든 도메인 화려함 허용). 아래 가중은 **여전히 BLOCK인 품질 4항목(A2-A3-A4-A8)과 A5-A6**에 적용된다.
+
 | 도메인 | 특히 엄격하게 볼 항목 | 이유 |
 |--------|----------------------|------|
-| 웹앱 (§4.1) | A3(균등 그리드)·A9(모션) | 인터랙티브 화면일수록 위계·모션 절제가 신뢰를 만든다. |
-| 분석 보고서 (§4.2) | A8(명사구 제목)·A7(색 남발)·A6(회색 박스) | 결론형 제목·CVD안전 색·data zone 절제가 협상 불가. |
-| C레벨 보고서 (§4.3) | A1(보라 그라데이션)·A7(accent 남발)·A5(센터 hero) | "신뢰·절제 > 화려함"이 art brief에 못박힌 도메인. 화려함이 곧 감점. |
-| 발표 PPT (§4.4) | A4(이모지)·A8(명사구 제목)·A9(모션) | 슬라이드당 1주장·결론형 제목·빔 가독. 표지(expression zone)는 A5 가운데정렬 허용 예외. |
-| 기타 (§4.5) | 확정 도메인의 가중 상속 | 도메인 확정 후 해당 행 적용. 마케팅 랜딩은 가독 하한선 위에서 A5·A9 일부 완화 가능. |
+| 웹앱 (§4.1) | A3(균등 그리드) | 인터랙티브 화면일수록 위계가 신뢰를 만든다. (모션은 자유) |
+| 분석 보고서 (§4.2) | A8(명사구 제목)-A6(회색 박스) | 결론형 제목-CVD안전 색이 협상 불가. (색 대담함은 허용) |
+| C레벨 보고서 (§4.3) | A5(센터 hero) | 임원 보고도 대담한 색-그라데이션 허용 -- 다만 결론형 위계는 유지. |
+| 발표 PPT (§4.4) | A4(이모지)-A8(명사구 제목) | 슬라이드당 1주장-결론형 제목-빔 가독. 표지(expression zone)는 A5 가운데정렬 허용 예외. |
+| 기타 (§4.5) | 확정 도메인의 가중 상속 | 도메인 확정 후 해당 행 적용. |
 
-> **expression zone 예외**: art brief가 정의한 expression zone(표지·간지·풀블리드 장식면, `art-brief-template.md`의 no-text AND no-meaning)은 A5(가운데정렬)·A1(그라데이션) 일부를 **무드 자유로 허용**한다. 단 텍스트가 올라오는 순간 성역(APCA AND WCAG)으로 복귀하며, 스크림 오버레이 위 대비를 재측정한다(`a11y-checklist.md`). data zone(차트·표·본문)은 예외 없이 9개 전부 엄격 적용.
+> **expression zone 예외**: art brief가 정의한 expression zone(표지-간지-풀블리드 장식면, `art-brief-template.md`의 no-text AND no-meaning)은 A5(가운데정렬)를 **무드 자유로 허용**한다(A1 그라데이션은 이제 모든 면에서 자유). 단 텍스트가 올라오는 순간 성역(APCA AND WCAG)으로 복귀하며, 스크림 오버레이 위 대비를 재측정한다(`a11y-checklist.md`). data zone(차트-표-본문)도 결론형 제목-대비-CVD는 엄격 적용한다(색-모션 대담함은 모든 zone에서 허용).
 
 ---
 
@@ -180,16 +191,15 @@ grep -niE "transition[^;]*[0-9]+ms[^;]*ease.*all|animation-duration: *[3-9][0-9]
 
 ## 5. 빠른 요약 (런타임 1줄 체크)
 
-> 출고 전 이 9개를 소리 내어 묻는다. 하나라도 "예"면 멈추고 교체한다.
+> 출고 전 아래를 소리 내어 묻는다. 하나라도 "예"면 멈추고 교체한다.
+> (A1 그라데이션-A7 accent 다색-A9 장식 모션 길이/루프는 **완화돼 더 이상 묻지 않는다** -- 화려함 허용.)
 >
-> 1. 화이트 위에 보라 그라데이션 있나? (A1)
 > 2. Inter/Roboto/system 폰트로 끝났나? (A2)
 > 3. 똑같은 카드 3장이 한 줄로 있나? (A3)
 > 4. 의미 없는 이모지를 아이콘처럼 썼나? (A4)
 > 5. 가운데정렬 hero + 흔한 일러스트인가? (A5)
 > 6. 모든 게 채도 0 회색 박스인가? (A6)
-> 7. 강조색이 3종 이상 진하게 있나? / 60-30-10 깨졌나? (A7)
 > 8. 차트 제목이 명사구(결론 없음)인가? (A8)
-> 9. 무한·과한 통통 모션이 있나? / reduced-motion 폴백 없나? (A9)
+> 9. (모션을 썼는데) reduced-motion 폴백이 없나? (A9 -- 폴백 누락만 BLOCK, 길이-루프는 자유)
 >
 > 전부 "아니요" → PASS. 사용자에게 "사람이 다듬은 느낌 ✓"로 보고.

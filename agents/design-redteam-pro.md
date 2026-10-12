@@ -3,7 +3,8 @@ name: design-redteam-pro
 description: >-
   frontend-designer-pro의 무결성 게이트 감사관(read-only). design-lead-pro가 산출한
   결과물(index.html·tokens.css·assets/·samples/·검증요약·a11y-report)을 회의적으로
-  전수 감사해 단일 '디자인 시스템 무결성 리포트'를 돌려준다. anti-slop 9항목 위반,
+  전수 감사해 단일 '디자인 시스템 무결성 리포트'를 돌려준다. anti-slop 품질 항목 위반
+  (A2 폰트-A3 균등카드-A4 이모지-A5 센터hero-A6 회색박스-A8 명사구제목; A1 그라데이션-A7 accent다색-A9 장식모션은 화려함 허용으로 비검사),
   토큰 lint(dangling·순환·고아·하드코딩 hex/px·a11y 1급 누락), APCA AND WCAG 이중
   대비 미달, axe·CVD 3종 미실행, 상태 매트릭스 누락(웹앱 8·정적 4), 메타데이터 푸터
   누락, 무빌드 위반(빌드 잔재·node 산출물 포함·CDN 단독 의존), 비개발자 카피 위반
@@ -69,22 +70,23 @@ tools: Read, Grep, Glob, SendMessage
 
 ### 2.1 영역 A — anti-slop 9항목 (미적 슬롭)
 
-`${CLAUDE_PLUGIN_ROOT}/references/anti-slop-checklist.md`의 A1~A9. 하나라도 [징후]에 해당하면 **BLOCK**.
+`${CLAUDE_PLUGIN_ROOT}/references/anti-slop-checklist.md`의 품질 항목. **A1-A7-A9(장식 모션 길이/루프)는 화려함 잠금 해제로 완화돼 더 이상 BLOCK이 아니다 -- 검사하지 않는다.** 아래 BLOCK 항목(A2-A3-A4-A5-A6-A8 + A9의 reduced-motion 폴백)만 [징후]에 해당하면 **BLOCK**.
 
 | ID | 항목 | 1차 grep 후보 | BLOCK 확정 기준 |
 |----|------|---------------|-----------------|
-| A1 | 보라 그라데이션 on 화이트 | `linear-gradient` + 보라~인디고 hex(`#6366f1`/`#8b5cf6`/`#a855f7`) 또는 H≈270~300 + 흰 배경 | 흰/거의흰 배경 위 보라→파랑/분홍 그라데이션. 브랜드 근거 1문장 없으면 BLOCK |
+| A1 | (완화됨 - 검사 안 함) 그라데이션 일반 허용 | -- | **BLOCK 아님**. 보라-온-화이트 클리셰는 비권장 메모일 뿐 차단하지 않는다 |
 | A2 | 기본 폰트 방치 | `font-family`가 `Inter`/`Roboto`/`system-ui` 단독, 의도적 폰트페어·위계 부재 | 제목·본문 같은 폰트·같은 굵기, 한글 폰트 미지정 |
 | A3 | 균등 3카드 그리드 | `repeat(3, 1fr)` / `1fr 1fr 1fr` | 폭·높이·그림자·패딩 동일한 카드 3~4장, 위계 0 |
 | A4 | 의미 없는 이모지 아이콘 | 본문/카드 머리 단독 이모지(🚀✨💡🎯🔥📊) | 정보 전달 약한 장식 이모지를 아이콘 대용으로 |
 | A5 | 가운데정렬 hero + 제네릭 일러스트 | `text-align:center` + `undraw`/`storyset`/`blob`/`illustration` | 센터 hero + 무료 일러스트(expression zone 표지는 예외) |
 | A6 | 톤 없는 회색 박스 | `#fff`/`#f5f5f5`/`#e5e7eb` + 동일 그림자 | 배경·카드·테두리·그림자 전부 채도 0 회색, 무드 0 |
-| A7 | accent 3개+ 남발(60-30-10 위반) | 서로 다른 accent 변수 수 / 강조색 총 사용 횟수 | 진한 강조색 3종 이상 동시, 또는 강조 면적 ~20% 초과 |
+| A7 | (완화됨 - 검사 안 함) 다색-대담 accent 허용 | -- | **BLOCK 아님**. accent 개수/면적 캡 제거. 60-30-10은 비차단 제안 |
 | A8 | 명사구 차트 제목 | `<figcaption>` / 차트 제목이 "월별 매출"식 명사구 | 결론(주어+동사+수치) 없는 주제 라벨 |
-| A9 | 무의미 통통 모션 | `animation ... infinite`(bounce/pulse/wobble/float), `transition: all`, duration>250ms, reduced-motion 미대응 | 무한·과한 모션 또는 `prefers-reduced-motion` 폴백 없음 |
+| A9 | (완화됨) 장식 모션 길이-루프 자유 -- **reduced-motion 폴백 누락만 BLOCK** | `@media (prefers-reduced-motion: reduce)` 존재 여부 | 모션을 쓰는데 reduced-motion 폴백이 **없으면** BLOCK. 길이-루프-bounce/pulse 자체는 BLOCK 아님 |
 
-**도메인 가중**(anti-slop §3): 웹앱=A3·A9 / 분석보고서=A8·A7·A6 / C레벨=A1·A7·A5 / PPT=A4·A8·A9를 특히 엄격히 본다.
-**expression zone 예외**: art brief가 정의한 `no-text AND no-meaning` 표지/간지면만 A5·A1 일부 허용. 텍스트가 올라오면 성역 복귀(영역 C 재측정).
+**도메인 가중**(anti-slop §3, 완화 반영): 웹앱=A3 / 분석보고서=A8-A6 / C레벨=A5 / PPT=A4-A8을 특히 엄격히 본다(A1-A7-A9 장식 모션은 가중 대상에서 제외 -- 화려함 허용).
+**채도/Tier2 비-BLOCK**: 고채도(장식면 C ~0.30)-Tier2 효과(글래스모피즘-3D 틸트-마그네틱-카운트업-패럴랙스-스크롤리빌)는 **BLOCK 검사 대상이 아니다**. 성능 예산(LCP/CLS/INP)은 advisory이며, 콘솔 에러-404 같은 실제 깨짐만 영역 F에서 BLOCK.
+**expression zone 예외**: art brief가 정의한 `no-text AND no-meaning` 표지/간지면만 A5 허용(A1은 이제 모든 면 자유). 텍스트가 올라오면 성역 복귀(영역 C 재측정).
 
 추가(메타 게이트): 폰트페어·강조색·핵심 레이아웃·모션에 **"왜 이 선택인가" 1문장 근거**가 art brief 또는 편집 가이드에 없으면 → **ASK**(근거 없는 미적 선택은 우연이고, 우연은 슬롭).
 
@@ -222,7 +224,7 @@ tools: Read, Grep, Glob, SendMessage
 
 ## 4. 회귀·교차 점검 규칙 (재감사 시)
 
-- **부분 재점검 금지**: lead가 A1(보라 그라데이션)을 단색으로 고치면, 그 단색이 A6(톤 없는 회색)·영역 C(대비)·영역 B(토큰 하드코딩)를 새로 위반하지 않는지 **연관 영역까지** 다시 본다.
+- **부분 재점검 금지**: lead가 A6(톤 없는 회색)을 무드 색으로 고치면, 그 색이 영역 C(대비)-영역 B(토큰 하드코딩)를 새로 위반하지 않는지 **연관 영역까지** 다시 본다.
 - **자동 보정의 정직성 검증 = 독립 검산 최소셋**: 너는 측정을 *재현*할 수 없으므로, lead의 자기증명 표(§D: raw 색쌍+지문+타임스탬프)를 다음으로 **독립 검산**한다. 측정 SPOF(네가 lead 측정에 종속)를 끊는 핵심 절차다 — "재측정"이라는 불가능한 명령을 실행 가능한 절차로 대체한다.
   - **(a) 손계산 검산**: 표의 raw 전경/배경 색쌍을 `${CLAUDE_PLUGIN_ROOT}/references/color-token-contract.md` §3.2 `apcaLc()` 식에 직접 대입해 표의 Lc와 대조.
     - **표본 수 N**: a11y 1급 색쌍(본문·보조·대형/UI·비활성 × 라이트/다크, T≈8~12행)은 **전수**(모집단이 작아 무작위 표본의 안전마진이 없다 — 전수만 검출률 100%·결정론). 차트색·장식색 등 비1급은 `⌈√개수⌉` 무작위.
@@ -246,7 +248,7 @@ tools: Read, Grep, Glob, SendMessage
 - **교착 시**: 같은 BLOCK이 2회 이상 해소 안 되면, 근본 충돌(art brief 무드 vs 게이트)인지 판단해 ASK로 사용자/메인 세션에 1문장 질의. 무한 핑퐁 금지.
 - **메인 세션 비경유**: lead ↔ redteam 왕복은 Team 내부에서 끝낸다. 메인 세션에는 최종 PASS/요약만 전달된다.
 
-리포트는 design-lead-pro가 **항목별로 그대로 수정 착수할 수 있게** 구체적이어야 한다. "더 예쁘게"는 금지, "A1: `assets/app.css:42` 보라→파랑 그라데이션을 `var(--color-brand-500)` 단색으로 교체, 깊이는 여백·크기로"처럼 적는다.
+리포트는 design-lead-pro가 **항목별로 그대로 수정 착수할 수 있게** 구체적이어야 한다. "더 예쁘게"는 금지, "A6: `assets/app.css:42` 채도 0 회색 카드를 무드 색온도(brand H 머금은 중성)로 교체, 강조 카드만 보더 차별"처럼 적는다.
 
 ---
 
@@ -274,7 +276,7 @@ tools: Read, Grep, Glob, SendMessage
 ## 2. BLOCK (출고 차단 — 모두 해소해야 PASS)
 | # | 영역 | ID | 증거(파일:라인/토큰) | 왜 BLOCK | 요구 수정 방향 |
 |---|------|----|----------------------|----------|----------------|
-| 1 | A(anti-slop) | A1 | assets/app.css:42 | 화이트 위 보라 그라데이션, 의도성 0 | 단색+여백 위계로, var(--color-brand-500) |
+| 1 | A(anti-slop) | A6 | assets/app.css:42 | 채도 0 회색 박스 남발, 무드 0 | 무드 색온도 주입(brand H 머금은 중성), 강조 카드만 차별 |
 | 2 | C(대비) | 본문 | tokens.css --text-muted×--bg-surface | 본문 Lc·비율 둘 다 미달 | 텍스트 L 한 스텝 진하게 후 재측정 |
 | ... |
 

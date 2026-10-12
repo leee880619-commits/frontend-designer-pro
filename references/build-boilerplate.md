@@ -191,7 +191,7 @@ a{color:inherit;text-decoration-thickness:from-font;}
   --focus-ring-width: 2px;
   --focus-ring-offset: 2px;
   --motion-duration-fast: 120ms;
-  --motion-duration-base: 200ms;   /* 기본값 200ms · 모션 예산 상한 ≤250ms (_contract.md §1) */
+  --motion-duration-base: 200ms;   /* 기능 UI 피드백 기본값(상한 아님). 장식 모션은 길이-반복 자유 (_contract.md §1) */
   --motion-reduce: 1;              /* reduced 시 0 */
   --target-size-min: 24px;          /* 터치 최소(권장 44px) */
 
@@ -366,7 +366,7 @@ if (mount) render(html`<${Counter} />`, mount);
 | Tier | 비용 | 수단(예) | 허용 조건 | 폴백 의무 |
 |------|------|----------|-----------|-----------|
 | **Tier 0** | **0 (항상 권장)** | 타이포 위계(크기·굵기·자간), 넉넉한 여백, **CSS Grid 비대칭 레이아웃**, 대비·색 1포인트, `text-wrap:balance/pretty` | 무조건 1차로 사용. personality의 90%를 여기서 만든다 | 불필요(이미 정적) |
-| **Tier 1** | **저비용** | `transform`/`opacity` 마이크로 인터랙션(호버 살짝 떠오름·페이드인), 진입 1회 애니메이션 | 모션 예산 준수(1회·≤250ms), `prefers-reduced-motion: reduce` 폴백 필수 | **reduced-motion 시 0** (CSS로 자동 차단, §3.1 reset에 내장) |
+| **Tier 1** | **저비용** | `transform`/`opacity` 마이크로 인터랙션(호버 살짝 떠오름-페이드인), 스크롤 등장-카운트업-은은한 루프 등 장식 애니메이션 | 장식 모션은 길이-반복 자유(무한 루프 허용), 기능 UI는 기본 120/200ms, `prefers-reduced-motion: reduce` 폴백 **필수** | **reduced-motion 시 0** (CSS로 자동 차단, §3.1 reset에 내장) |
 | **Tier 2** | **고비용** | 배경 비디오, 그레인(noise) 텍스처, 패럴랙스 스크롤, `backdrop-filter` 글래스 | 성능 예산(LCP/CLS/INP) **실측 통과** + 폴백 존재 + art brief가 명시 요구 시에만 | 미지원/저사양 폴백 필수(아래 §7.1·§7.2) |
 
 **판단 규칙**: Tier 0로 충분하면 Tier 1·2를 추가하지 않는다. "대담함=무거움"은 게으른 변명(01-debate §93). 비대칭=CSS Grid(비용 0), 그레인=SVG/소형 타일(아래)로 구현 기법으로 예산을 맞추고, 장식부터 버리지 않되 **예산을 깨면 장식을 버린다**.

@@ -231,8 +231,9 @@ h1  문서 제목
 <div id="status" aria-live="polite" aria-atomic="true" class="visually-hidden"></div>
 ```
 
-### 5.2 prefers-reduced-motion (모션 예산 = 1회·≤250ms·reduced 0)
-- art brief 모션 예산(spec §2): 진입 1회·≤250ms·`prefers-reduced-motion`에서 **0**.
+### 5.2 prefers-reduced-motion (reduced 시 0 -- 필수)
+- 장식 모션(스크롤 등장-카운트업-패럴랙스-은은한 루프)은 길이-반복 제한이 없다. 기능 UI 피드백은 기본 `120ms`(fast)/`200ms`(base)이되 이는 상한이 아니다.
+- `prefers-reduced-motion: reduce`에서 **0** 폴백은 필수다(아래 @media reset). 길이-루프 상한은 없지만 reduced-motion 수용은 면제되지 않는다.
 - 사용자가 OS에서 "움직임 줄이기"를 켜면 애니메이션·패럴랙스·자동재생을 끈다.
 
 ```css
@@ -260,7 +261,7 @@ h1  문서 제목
 
   /* 모션 — motion.duration.{fast,base} + motion.reduce 플래그 */
   --motion-duration-fast: 120ms;
-  --motion-duration-base: 200ms;  /* 기본값 200ms · 모션 예산 상한 ≤250ms (_contract.md §1) */
+  --motion-duration-base: 200ms;  /* 기능 UI 피드백 기본값(상한 아님). 장식 모션은 길이-반복 자유 (_contract.md §1) */
   /* motion.reduce는 @media (prefers-reduced-motion)로 표현(§5.2) */
 
   /* 터치 타깃 — target.size.min */
