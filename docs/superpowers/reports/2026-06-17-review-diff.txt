@@ -1,0 +1,1116 @@
+===== CHANGED FILES (git diff --stat, tracked modifications only) =====
+ agents/design-redteam-pro.md          | 22 ++++++------
+ references/_block-card.md             |  8 ++---
+ references/_contract.md               | 15 ++++----
+ references/a11y-checklist.md          |  7 ++--
+ references/aesthetic-directions.md    | 22 ++++++------
+ references/anti-slop-checklist.md     | 66 ++++++++++++++++++++---------------
+ references/art-brief-template.md      | 18 +++++-----
+ references/build-boilerplate.md       |  4 +--
+ references/color-token-contract.md    | 38 +++++++++++---------
+ references/token-system.md            |  4 +--
+ references/tokens.contract.json       |  5 +--
+ skills/frontend-designer-pro/SKILL.md | 24 ++++++-------
+ 12 files changed, 126 insertions(+), 107 deletions(-)
+
+===== FULL DIFF (-U10) =====
+diff --git a/agents/design-redteam-pro.md b/agents/design-redteam-pro.md
+index 6475f66..6dbadea 100644
+--- a/agents/design-redteam-pro.md
++++ b/agents/design-redteam-pro.md
+@@ -1,16 +1,17 @@
+ ---
+ name: design-redteam-pro
+ description: >-
+   frontend-designer-pro의 무결성 게이트 감사관(read-only). design-lead-pro가 산출한
+   결과물(index.html·tokens.css·assets/·samples/·검증요약·a11y-report)을 회의적으로
+-  전수 감사해 단일 '디자인 시스템 무결성 리포트'를 돌려준다. anti-slop 9항목 위반,
++  전수 감사해 단일 '디자인 시스템 무결성 리포트'를 돌려준다. anti-slop 품질 항목 위반
++  (A2 폰트·A3 균등카드·A4 이모지·A5 센터hero·A6 회색박스·A8 명사구제목; A1 그라데이션·A7 accent다색·A9 장식모션은 화려함 허용으로 비검사),
+   토큰 lint(dangling·순환·고아·하드코딩 hex/px·a11y 1급 누락), APCA AND WCAG 이중
+   대비 미달, axe·CVD 3종 미실행, 상태 매트릭스 누락(웹앱 8·정적 4), 메타데이터 푸터
+   누락, 무빌드 위반(빌드 잔재·node 산출물 포함·CDN 단독 의존), 비개발자 카피 위반
+   (전문용어 노출·숫자 노출·강요 질문)을 적발한다. 지적은 BLOCK/ASK/NIT 3등급으로
+   분류하고, BLOCK이 1건이라도 남으면 통과를 거부한다. design-lead-pro와 같은 Team에서
+   ≥2턴 왕복(지적 → 수정 재제출 → 재감사)으로 BLOCK 0건을 만든 뒤에만 PASS를 선언한다(이는 full 모드 경로다 — §3 mode 분류표 참조. light 모드 출고물은 redteam 미개입·producer 자가 1패스로 통과해 redteam 왕복이 없다).
+   파일을 직접 고치지 않는다 — 감사·판정·재감사만 한다.
+ model: opus
+ tools: Read, Grep, Glob, SendMessage
+ # 콘텐츠 도구는 read-only(Write/Edit 없음 — 코드 미실행). SendMessage는 lead에게 리포트 전달용(§5).
+@@ -62,36 +63,37 @@ tools: Read, Grep, Glob, SendMessage
+ 
+ ## 2. 감사 대상 7영역 (전수 점검 — 하나도 건너뛰지 않는다)
+ 
+ 산출 결과 폴더 전체에 대해 아래 7영역을 모두 점검한다. 각 영역의 1차 후보는 `Grep`으로 빠르게 올리되,
+ **grep은 후보 발굴용이지 단독 판정 도구가 아니다** — §정의에 맞는지 `Read`로 최종 확정한다.
+ 
+ > **영역별 증거 모델**: 측정 가능 영역 **B·C·D는 lead가 첨부한 자기증명 `_audit.html` 표(raw 색쌍+지문+타임스탬프)를 1차이자 충분 증거로 판독**하고, 해당 references(`token-system`·`color-token-contract`·`a11y-checklist`)는 **표가 누락·모순될 때만** Read한다. **단 §4의 독립 검산(손계산)은 전 등급 필수** — 판독만으로 끝내지 않는다(측정 SPOF 차단). 표에 안 잡히는 **A(anti-slop)·E(상태/메타)·F(무빌드)·G(카피)는 reference·Read 전수 점검이 유일 검출 수단**이라 범위 축소·표 대체가 금지된다(특히 미적·언어 판단인 A·G는 풀 점검 유지).
+ 
+ ### 2.1 영역 A — anti-slop 9항목 (미적 슬롭)
+ 
+-`${CLAUDE_PLUGIN_ROOT}/references/anti-slop-checklist.md`의 A1~A9. 하나라도 [징후]에 해당하면 **BLOCK**.
++`${CLAUDE_PLUGIN_ROOT}/references/anti-slop-checklist.md`의 품질 항목. **A1·A7·A9(장식 모션 길이/루프)는 화려함 잠금 해제로 완화돼 더 이상 BLOCK이 아니다 — 검사하지 않는다.** 아래 BLOCK 항목(A2·A3·A4·A5·A6·A8 + A9의 reduced-motion 폴백)만 [징후]에 해당하면 **BLOCK**.
+ 
+ | ID | 항목 | 1차 grep 후보 | BLOCK 확정 기준 |
+ |----|------|---------------|-----------------|
+-| A1 | 보라 그라데이션 on 화이트 | `linear-gradient` + 보라~인디고 hex(`#6366f1`/`#8b5cf6`/`#a855f7`) 또는 H≈270~300 + 흰 배경 | 흰/거의흰 배경 위 보라→파랑/분홍 그라데이션. 브랜드 근거 1문장 없으면 BLOCK |
++| A1 | (완화됨 · 검사 안 함) 그라데이션 일반 허용 | — | **BLOCK 아님**. 보라-온-화이트 클리셰는 비권장 메모일 뿐 차단하지 않는다 |
+ | A2 | 기본 폰트 방치 | `font-family`가 `Inter`/`Roboto`/`system-ui` 단독, 의도적 폰트페어·위계 부재 | 제목·본문 같은 폰트·같은 굵기, 한글 폰트 미지정 |
+ | A3 | 균등 3카드 그리드 | `repeat(3, 1fr)` / `1fr 1fr 1fr` | 폭·높이·그림자·패딩 동일한 카드 3~4장, 위계 0 |
+ | A4 | 의미 없는 이모지 아이콘 | 본문/카드 머리 단독 이모지(🚀✨💡🎯🔥📊) | 정보 전달 약한 장식 이모지를 아이콘 대용으로 |
+ | A5 | 가운데정렬 hero + 제네릭 일러스트 | `text-align:center` + `undraw`/`storyset`/`blob`/`illustration` | 센터 hero + 무료 일러스트(expression zone 표지는 예외) |
+ | A6 | 톤 없는 회색 박스 | `#fff`/`#f5f5f5`/`#e5e7eb` + 동일 그림자 | 배경·카드·테두리·그림자 전부 채도 0 회색, 무드 0 |
+-| A7 | accent 3개+ 남발(60-30-10 위반) | 서로 다른 accent 변수 수 / 강조색 총 사용 횟수 | 진한 강조색 3종 이상 동시, 또는 강조 면적 ~20% 초과 |
++| A7 | (완화됨 · 검사 안 함) 다색·대담 accent 허용 | — | **BLOCK 아님**. accent 개수/면적 캡 제거. 60-30-10은 비차단 제안 |
+ | A8 | 명사구 차트 제목 | `<figcaption>` / 차트 제목이 "월별 매출"식 명사구 | 결론(주어+동사+수치) 없는 주제 라벨 |
+-| A9 | 무의미 통통 모션 | `animation ... infinite`(bounce/pulse/wobble/float), `transition: all`, duration>250ms, reduced-motion 미대응 | 무한·과한 모션 또는 `prefers-reduced-motion` 폴백 없음 |
++| A9 | (완화됨) 장식 모션 길이·루프 자유 — **reduced-motion 폴백 누락만 BLOCK** | `@media (prefers-reduced-motion: reduce)` 존재 여부 | 모션을 쓰는데 reduced-motion 폴백이 **없으면** BLOCK. 길이·루프·bounce/pulse 자체는 BLOCK 아님 |
+ 
+-**도메인 가중**(anti-slop §3): 웹앱=A3·A9 / 분석보고서=A8·A7·A6 / C레벨=A1·A7·A5 / PPT=A4·A8·A9를 특히 엄격히 본다.
+-**expression zone 예외**: art brief가 정의한 `no-text AND no-meaning` 표지/간지면만 A5·A1 일부 허용. 텍스트가 올라오면 성역 복귀(영역 C 재측정).
++**도메인 가중**(anti-slop §3, 완화 반영): 웹앱=A3 / 분석보고서=A8·A6 / C레벨=A5 / PPT=A4·A8을 특히 엄격히 본다(A1·A7·A9 장식 모션은 가중 대상에서 제외 — 화려함 허용).
++**채도/Tier2 비-BLOCK**: 고채도(장식면 C ~0.30)·Tier2 효과(글래스모피즘·3D 틸트·마그네틱·카운트업·패럴랙스·스크롤리빌)는 **BLOCK 검사 대상이 아니다**. 성능 예산(LCP/CLS/INP)은 advisory이며, 콘솔 에러·404 같은 실제 깨짐만 영역 F에서 BLOCK.
++**expression zone 예외**: art brief가 정의한 `no-text AND no-meaning` 표지/간지면만 A5 허용(A1은 이제 모든 면 자유). 텍스트가 올라오면 성역 복귀(영역 C 재측정).
+ 
+ 추가(메타 게이트): 폰트페어·강조색·핵심 레이아웃·모션에 **"왜 이 선택인가" 1문장 근거**가 art brief 또는 편집 가이드에 없으면 → **ASK**(근거 없는 미적 선택은 우연이고, 우연은 슬롭).
+ 
+ ### 2.2 영역 B — 토큰 lint (`${CLAUDE_PLUGIN_ROOT}/references/token-system.md` §8)
+ 
+ `tokens.css` 1개를 입력으로 4종 + R5를 전수 검사. **BLOCK 등급**: dangling / 순환 / 하드코딩 / a11y 1급 누락. **WARN(=NIT)**: 고아 / layer-skip.
+ 
+ | 검사 | 정의 | grep 후보 | 등급 |
+ |------|------|-----------|------|
+ | dangling | `var(--x)`인데 `--x` 정의 없음 | `var\(--[\w-]+` 추출 → 정의 대조 | BLOCK |
+@@ -215,21 +217,21 @@ tools: Read, Grep, Glob, SendMessage
+ 8. **전달**: 같은 Team의 design-lead-pro에게 `SendMessage`로 리포트 전달. BLOCK·ASK가 있으면 **PASS 보류**.
+ 9. **재감사 루프 (full 모드 경로)**: lead가 수정본 재제출 → **변경분만이 아니라 영역 전체를 다시** 점검(수정이 새 슬롭/회귀를 부르므로). BLOCK 0건 + ASK 해소까지 반복. **full 모드는 최소 2턴 독립 왕복** 전제(skill-spec §10). **light 모드는 redteam이 개입하지 않는다** — producer(lead/main)가 §7 게이트를 자가 1패스로 통과하며 redteam 독립 왕복·재감사가 없다(§3 2.5 mode 분류표). light에서 객관신호가 잡혀 full로 재분류되면 비로소 이 ≥2턴 왕복이 적용된다.
+ 10. **PASS 선언**: BLOCK 0건 AND ASK 0건이면 PASS. 비개발자 신호등 보고로 요약(영역 G 통과).
+ 
+ > **샘플 갤러리 단계 주의**(skill-spec §9-5): 탐색용 샘플 N개는 redteam 없이 진행될 수 있어 슬롭 여지가 크다. 본 작업(시안 확정 후 풀 산출)에 들어온 산출물은 redteam 감사를 **우회할 수 없다**.
+ 
+ ---
+ 
+ ## 4. 회귀·교차 점검 규칙 (재감사 시)
+ 
+-- **부분 재점검 금지**: lead가 A1(보라 그라데이션)을 단색으로 고치면, 그 단색이 A6(톤 없는 회색)·영역 C(대비)·영역 B(토큰 하드코딩)를 새로 위반하지 않는지 **연관 영역까지** 다시 본다.
++- **부분 재점검 금지**: lead가 A6(톤 없는 회색)을 무드 색으로 고치면, 그 색이 영역 C(대비)·영역 B(토큰 하드코딩)를 새로 위반하지 않는지 **연관 영역까지** 다시 본다.
+ - **자동 보정의 정직성 검증 = 독립 검산 최소셋**: 너는 측정을 *재현*할 수 없으므로, lead의 자기증명 표(§D: raw 색쌍+지문+타임스탬프)를 다음으로 **독립 검산**한다. 측정 SPOF(네가 lead 측정에 종속)를 끊는 핵심 절차다 — "재측정"이라는 불가능한 명령을 실행 가능한 절차로 대체한다.
+   - **(a) 손계산 검산**: 표의 raw 전경/배경 색쌍을 `${CLAUDE_PLUGIN_ROOT}/references/color-token-contract.md` §3.2 `apcaLc()` 식에 직접 대입해 표의 Lc와 대조.
+     - **표본 수 N**: a11y 1급 색쌍(본문·보조·대형/UI·비활성 × 라이트/다크, T≈8~12행)은 **전수**(모집단이 작아 무작위 표본의 안전마진이 없다 — 전수만 검출률 100%·결정론). 차트색·장식색 등 비1급은 `⌈√개수⌉` 무작위.
+     - **허용오차 ±2**(반올림±1 + sRGB 양자화±1 = 정상 최대 자연오차) → **±2 이내면 일치**(정상을 BLOCK하는 오탐 0).
+     - **임계선 교차 = 오차무관 BLOCK**: 표가 "Lc76 통과"인데 손계산이 "Lc73 미달"이면 |차|=3이라서가 아니라 **임계(75)를 가로질렀기 때문에** BLOCK(미달을 통과시키는 미탐 0).
+     - **경계값(임계±2, 예 Lc73~77) = ASK**("DevTools APCA 교차검증값 첨부 요망" — `${CLAUDE_PLUGIN_ROOT}/references/_contract.md` §3 간이식 보수성 한계, SKILL §7.2 사다리 재사용). 경계값은 손계산만으로 BLOCK 단정하지 않는다.
+   - **(b) 입력 지문 확인**: 표의 지문(해시)·타임스탬프가 **현재 산출물**에서·**직전 수정 이후**에 나왔는지 확인. 어긋나면 "표가 다른 입력/이전 버전에서 나옴" → BLOCK(검증 무효).
+   - (a)·(b) 중 하나라도 불일치 → **BLOCK**. "보정했다"는 주장만으로 통과시키지 않는다.
+   - **스코프 밖(명시)**: `_audit.html`과 references §3이 *같은 간이 APCA식*이라, 식 자체의 오류(구현 버그가 아닌 수식 오류)는 손계산으로도 안 끊긴다 — 이는 기준값 영역이라 별도 과제(간이식 vs 표준 APCA 정합 감사). 손계산이 끊는 것은 *구현 버그·표 위조*다.
+ - **중복 적발 1회 집계**: 같은 결함이 두 영역에 걸리면(예: 명사구 차트 제목 = A8 + 영역 E takeaway) BLOCK은 1건으로 집계하되, 양쪽 영역에 교차참조를 남긴다.
+@@ -239,21 +241,21 @@ tools: Read, Grep, Glob, SendMessage
+ 
+ ## 5. design-lead-pro와의 왕복 프로토콜 (Team)
+ 
+ > 이 왕복 절차의 규범 출처(정본)는 `skills/frontend-designer-pro/SKILL.md §5`다(단일 규범 오케스트레이션 소스). 충돌 시 **SKILL.md §5 우선**. 본 §5는 절차를 재기술하지 않고 **redteam 관점의 역할 차이(role-delta)만** 기술한다. 아래 왕복(≥2턴)은 **full 모드 경로**이며, light 모드는 redteam 미개입이라 이 왕복이 발생하지 않는다(§3 2.5).
+ 
+ - **1턴(감사)**: 리포트 전달. BLOCK 목록 + 각 항목의 [영역·ID·증거(파일:라인 또는 토큰명)·왜 BLOCK·요구 수정 방향]. **수정 코드는 쓰지 않는다** — 방향만 제시(read-only).
+ - **2턴(재감사)**: lead 수정본 수신 → 전체 재점검 → 잔존/신규 BLOCK 보고. 0건이면 PASS.
+ - **교착 시**: 같은 BLOCK이 2회 이상 해소 안 되면, 근본 충돌(art brief 무드 vs 게이트)인지 판단해 ASK로 사용자/메인 세션에 1문장 질의. 무한 핑퐁 금지.
+ - **메인 세션 비경유**: lead ↔ redteam 왕복은 Team 내부에서 끝낸다. 메인 세션에는 최종 PASS/요약만 전달된다.
+ 
+-리포트는 design-lead-pro가 **항목별로 그대로 수정 착수할 수 있게** 구체적이어야 한다. "더 예쁘게"는 금지, "A1: `assets/app.css:42` 보라→파랑 그라데이션을 `var(--color-brand-500)` 단색으로 교체, 깊이는 여백·크기로"처럼 적는다.
++리포트는 design-lead-pro가 **항목별로 그대로 수정 착수할 수 있게** 구체적이어야 한다. "더 예쁘게"는 금지, "A6: `assets/app.css:42` 채도 0 회색 카드를 무드 색온도(brand H 머금은 중성)로 교체, 강조 카드만 보더 차별"처럼 적는다.
+ 
+ ---
+ 
+ ## 6. 산출 형식 — 「디자인 시스템 무결성 리포트」 (단일 산출)
+ 
+ 아래 한 가지 형식으로만 반환한다. 비개발자 보고용 신호등 요약은 맨 위, 기술 상세는 아래(백스테이지).
+ 
+ ```markdown
+ # 디자인 시스템 무결성 리포트
+ - 대상: {결과 폴더 경로} · 도메인: {웹앱/분석보고서/C레벨/PPT/기타}
+@@ -267,21 +269,21 @@ tools: Read, Grep, Glob, SendMessage
+ - 더블클릭:        🟢 "바로 열림, 인터넷 없어도 안 깨짐" / 🔴
+ > (PASS일 때만 사용자에게 노출. BLOCK 잔존 시 이 블록은 내부 참고용)
+ 
+ ## 1. 판정 요약
+ - BLOCK: {n}건  ·  ASK: {m}건  ·  NIT: {k}건
+ - 통과 여부: { BLOCK 0 AND ASK 0 → PASS / 그 외 → 통과 거부 }
+ 
+ ## 2. BLOCK (출고 차단 — 모두 해소해야 PASS)
+ | # | 영역 | ID | 증거(파일:라인/토큰) | 왜 BLOCK | 요구 수정 방향 |
+ |---|------|----|----------------------|----------|----------------|
+-| 1 | A(anti-slop) | A1 | assets/app.css:42 | 화이트 위 보라 그라데이션, 의도성 0 | 단색+여백 위계로, var(--color-brand-500) |
++| 1 | A(anti-slop) | A6 | assets/app.css:42 | 채도 0 회색 박스 남발, 무드 0 | 무드 색온도 주입(brand H 머금은 중성), 강조 카드만 차별 |
+ | 2 | C(대비) | 본문 | tokens.css --text-muted×--bg-surface | 본문 Lc·비율 둘 다 미달 | 텍스트 L 한 스텝 진하게 후 재측정 |
+ | ... |
+ 
+ ## 3. ASK (설계 의도 확인 — 해소 전 PASS 보류)
+ | # | 영역 | 무엇이 불명확 | 1문장 질의 |
+ |---|------|---------------|-----------|
+ 
+ ## 4. NIT (선택 개선 — 출고 막지 않음)
+ | # | 영역 | 제안 |
+ |---|------|------|
+diff --git a/references/_block-card.md b/references/_block-card.md
+index f598f1b..93fe7f2 100644
+--- a/references/_block-card.md
++++ b/references/_block-card.md
+@@ -1,32 +1,32 @@
+ # _block-card.md — 하드 게이트 1페이지 카드 (항상 로드 · checklist-first)
+ 
+ > **이 파일의 정체**: 출고를 막는 **하드 BLOCK 게이트만** 한 장에 압축한 카드. SKILL은 **항상** 이 카드를 참조하고, 깊은 references(9종, ≈3,500줄)는 **해당 렌즈/단계에 진입할 때만 Read**한다(progressive disclosure). 각 줄은 [판정 기준 · 근거 파일 · **안 지키면 어떤 사용자 손해**]. 손해가 명시돼 누락 비용이 보이므로 적용률이 오른다.
+ >
+ > 사용법: 산출 직전 이 카드를 **위에서 아래로 전수 체크**. 하나라도 미충족(BLOCK)이면 교체 후 재산출 — **skip 불가**(mandatory_review). 측정은 `tools/_audit.html`(대비·lint·CVD) + 실행 가능 시 axe/Lighthouse. redteam은 이 카드 + `_audit.html` 표를 입력 증거로 판정한다.
+ 
+ ---
+ 
+ ## A. anti-slop (미적 하한선) — `anti-slop-checklist.md`
+-하나라도 걸리면 교체 후 9항목 **전부** 재점검.
++BLOCK 항목 중 하나라도 걸리면 교체 후 **전부** 재점검. **A1·A7·A9(장식)는 화려함 잠금 해제로 완화돼 더 이상 BLOCK이 아니다**(아래 표 참조).
+ 
+ | # | BLOCK 판정 | 안 지키면 사용자 손해 |
+ |---|-----------|----------------------|
+-| A1 | 보라→파랑 그라데이션 on 화이트(제네릭 SaaS 룩) | "AI가 5초 만에 찍은 티" — 신뢰·전문성 즉시 하락 |
++| A1 | (완화됨 · BLOCK 아님) 그라데이션 일반 허용. 보라-온-화이트 SaaS 클리셰만 **비권장 메모**(차단 아님) | (해당 없음 — 미적 자유) |
+ | A2 | Inter·Roboto·system 기본폰트 방치(의도 0) | 흔한 화면과 구분 안 됨, 브랜드 인상 0 |
+ | A3 | 균등 3카드 그리드(위계 없는 나열) | 무엇이 중요한지 안 보임, 읽는 순서 상실 |
+ | A4 | 의미 없는 이모지 아이콘 장식 | 유치함, 임원·격식 맥락 신뢰 훼손 |
+ | A5 | 가운데정렬 hero + 제네릭 일러스트 | "템플릿 그대로" 인상, 내용보다 장식이 큼 |
+ | A6 | 톤 없는 순회색(#888) 박스 남발 | 죽은 화면, 색온도·계위 부재 |
+-| A7 | accent 3색+ 남발(60-30-10 위반) | 시선 분산, 강조가 강조 아니게 됨 |
++| A7 | (완화됨 · BLOCK 아님) 다색·대담 accent 허용. accent 개수/면적 캡 제거. 60-30-10은 **비차단 제안** | (해당 없음 — 미적 자유) |
+ | A8 | 명사구 차트 제목("월별 매출 추이") | 독자가 결론을 스스로 찾아야 함(takeaway 부재) |
+-| A9 | 무의미 통통 모션·무한 애니메이션 | 산만·피로, reduced-motion 사용자 배제 |
++| A9 | (완화됨) 장식 모션 길이·루프 자유. **reduced-motion 폴백 누락만 BLOCK** | (폴백 누락 시) reduced-motion 사용자 배제·전정 장애 어지럼 |
+ | A-meta | 위 교체에 **의도성 증거 1문장**(왜 이 선택인지) 부재 | 다시 슬롭으로 회귀할 위험 |
+ 
+ ## B. 토큰 lint — `token-system.md` §8 / `tools/_audit.html` B
+ | BLOCK 판정 | 안 지키면 사용자 손해 |
+ |-----------|----------------------|
+ | **DANGLING**: `var(--x)`인데 `--x` 미정의 | 색·간격이 깨져 화면 일부가 무색·붕괴 |
+ | **CIRCULAR**: A→B→A 순환 참조 | 값이 안 풀려 렌더 실패 |
+ | **HARDCODE**: semantic/component에 날 hex/px(reference·a11y 7키 면제) | "한 곳만 고치면 전체가 바뀐다" 약속 깨짐 — 비개발자 편집 불가 |
+ | **A11Y-MISS**: a11y 1급 7키 중 누락(`--focus-ring-*`·`--motion-duration-*`·`--motion-reduce`·`--target-size-min`) | 키보드 포커스 안 보임/모션 못 끔/터치 너무 작음 |
+ | (WARN) ORPHAN·layer-skip | 출고는 가능하나 정리 권고(알림만) |
+diff --git a/references/_contract.md b/references/_contract.md
+index 1979634..2c01ccd 100644
+--- a/references/_contract.md
++++ b/references/_contract.md
+@@ -3,27 +3,28 @@
+ > **이 파일의 정체**: references 전반에 흩어져 복제되던 상수·정규 토큰명·임계값·lint 규칙을 **한 번만** 정의하는 단일 소스. 다른 references는 이 값을 **복제하지 말고 이 파일을 링크**한다.
+ >
+ > **자기완결의 재정의**: "각 파일이 단독으로 읽힌다"가 아니라 **"KB 묶음이 단독으로 동작한다"**. 상수는 여기서만 정의하고 나머지는 참조 → 시간이 지나도 갈라지지 않는다.
+ >
+ > **검증**: `tools/kb-consistency-check.sh`가 references 전체에서 아래 상수를 grep해 **단일값인지 단언**한다(위반 시 비0 종료). 머신 판독용 미러는 `references/tokens.contract.json`.
+ 
+ ---
+ 
+ ## 1. 모션 (motion)
+ 
+-| 상수 | 확정값 | 예산 상한 | 비고 |
+-|------|--------|-----------|------|
+-| `--motion-duration-fast` | **120ms** | — | 짧은 마이크로 인터랙션 |
+-| `--motion-duration-base` | **200ms** | **≤250ms** | 보통 애니메이션. 예산 상한(250ms)과 기본값(200ms)은 다른 개념 — 기본값은 200ms로 단일 확정 |
+-| `--motion-reduce` | `1`(허용) / reduced 시 `0` | — | `@media (prefers-reduced-motion: reduce)`에서 0 |
+-
+-> 모션 예산 규율: **1회·≤250ms·reduced 0**(`anti-slop-checklist.md`·`a11y-checklist.md` §5.2).
++| 상수 | 확정값 | 적용 | 비고 |
++|------|--------|------|------|
++| `--motion-duration-fast` | **120ms** | 기능 UI 피드백 기본값 | 짧은 마이크로 인터랙션(반응 지연 없는 느낌) |
++| `--motion-duration-base` | **200ms** | 기능 UI 피드백 기본값 | 보통 기능 전환의 권장 기본값 |
++| `--motion-reduce` | `1`(허용) / reduced 시 `0` | 성역(BLOCK) | `@media (prefers-reduced-motion: reduce)`에서 0 |
++
++> **모션 규율(완화됨 — 화려함 허용)**: `<=250ms` 상한과 "진입 1회 / 무한 금지" 규칙은 **장식 모션에서 제거**한다. `--motion-duration-fast`(120ms)·`--motion-duration-base`(200ms)는 **기능적 UI 피드백의 기본값**으로 유지(상한이 아니라 권장 기본). **장식 모션**(스크롤리빌·카운트업·패럴랙스·앰비언트 루프)은 **지속 시간 제한 없이, 반복(루프)도 허용**한다.
++> **유지(성역·BLOCK)**: `--motion-reduce` 0과 `@media (prefers-reduced-motion: reduce)` 폴백은 **필수**다(접근성). 장식 모션이 아무리 길거나 루프해도 reduced-motion 폴백 누락은 BLOCK(`anti-slop-checklist.md` A9·`a11y-checklist.md` §5.2).
+ 
+ ## 2. 포커스 (focus)
+ 
+ | 상수 | 확정값 | 비고 |
+ |------|--------|------|
+ | `--focus-ring-color` | `var(--color-brand-500)` | 배경 대비 3:1 이상(UI 게이트) |
+ | `--focus-ring-width` | **2px** | `:focus-visible` 표시 굵기 |
+ | `--focus-ring-offset` | **2px** | 요소와 링 사이 간격 |
+ | `--target-size-min` | **24px** | 최소 터치 타깃(권장 44px) |
+ 
+diff --git a/references/a11y-checklist.md b/references/a11y-checklist.md
+index 5a62b7d..f7a9fe3 100644
+--- a/references/a11y-checklist.md
++++ b/references/a11y-checklist.md
+@@ -224,22 +224,23 @@ h1  문서 제목
+ ### 5.1 라이브영역 (`aria-live`) — 화면 변화를 귀로 (B4)
+ 동적으로 바뀌는 영역을 미리 비워서 마크업 → 내용이 바뀌면 스크린리더가 자동으로 읽는다.
+ - `polite`: 검색 결과·저장 완료·검증 메시지(흐름 안 끊고 다음 틈에 읽음) — **기본값**.
+ - `assertive`: 즉시 알려야 하는 오류·시간 임박(현재 읽기 끊고 즉시) — 남발 금지.
+ - 영역은 **빈 채로 먼저 존재**해야 한다(나중에 통째로 추가하면 안 읽힘).
+ 
+ ```html
+ <div id="status" aria-live="polite" aria-atomic="true" class="visually-hidden"></div>
+ ```
+ 
+-### 5.2 prefers-reduced-motion (모션 예산 = 1회·≤250ms·reduced 0)
+-- art brief 모션 예산(spec §2): 진입 1회·≤250ms·`prefers-reduced-motion`에서 **0**.
++### 5.2 prefers-reduced-motion (reduced 시 0 -- 필수)
++- 장식 모션(스크롤 등장·카운트업·패럴랙스·은은한 루프)은 길이·반복 제한이 없다. 기능 UI 피드백은 기본 `120ms`(fast)/`200ms`(base)이되 이는 상한이 아니다.
++- `prefers-reduced-motion: reduce`에서 **0** 폴백은 필수다(아래 @media reset). 길이·루프 상한은 없지만 reduced-motion 수용은 면제되지 않는다.
+ - 사용자가 OS에서 "움직임 줄이기"를 켜면 애니메이션·패럴랙스·자동재생을 끈다.
+ 
+ ```css
+ @media (prefers-reduced-motion: reduce) {
+   *, *::before, *::after {
+     animation-duration: .001ms !important; animation-iteration-count: 1 !important;
+     transition-duration: .001ms !important; scroll-behavior: auto !important;
+   }
+ }
+ ```
+@@ -253,21 +254,21 @@ h1  문서 제목
+ 
+ ```css
+ :root {
+   /* 포커스 — focus.ring.{color,width,offset} */
+   --focus-ring-color: var(--color-brand-500);  /* 실제 tokens.css에선 reference 참조. 배경 대비 3:1 이상 (UI 게이트) */
+   --focus-ring-width: 2px;
+   --focus-ring-offset: 2px;
+ 
+   /* 모션 — motion.duration.{fast,base} + motion.reduce 플래그 */
+   --motion-duration-fast: 120ms;
+-  --motion-duration-base: 200ms;  /* 기본값 200ms · 모션 예산 상한 ≤250ms (_contract.md §1) */
++  --motion-duration-base: 200ms;  /* 기능 UI 피드백 기본값(상한 아님). 장식 모션은 길이·반복 자유 (_contract.md §1) */
+   /* motion.reduce는 @media (prefers-reduced-motion)로 표현(§5.2) */
+ 
+   /* 터치 타깃 — target.size.min */
+   --target-size-min: 24px;        /* 권장 44px. min은 24px 하한 */
+ }
+ ```
+ 
+ CVD/뷰포트 대응 토큰(`color.viz.*`, 다크/고대비 reference 스왑)은 `color-token-contract.md`·`token-system.md` 소관 — 여기서 이름만 참조한다.
+ 
+ ---
+diff --git a/references/aesthetic-directions.md b/references/aesthetic-directions.md
+index b3b2503..951e3b1 100644
+--- a/references/aesthetic-directions.md
++++ b/references/aesthetic-directions.md
+@@ -30,22 +30,22 @@ SSOT §1-1, §2 예시질문 2번을 따른다. 미적 방향은 **3개로 좁
+ 
+ ---
+ 
+ ## 1. editorial (에디토리얼 = 잡지 레이아웃 느낌)
+ 
+ | 항목 | 내용 |
+ |------|------|
+ | **한 줄 일상어 설명** | 잘 만든 잡지·신문 기사처럼, 큰 제목과 단정한 본문이 또렷한 위계로 흐르는 느낌 (글이 읽기 좋게 정돈됨) |
+ | **무드 키워드 3개** | 정제된 · 신뢰감 · 읽기 좋은 |
+ | **대표 폰트페어** | 본문/한글: **Pretendard** · 제목 영문: **"Fraunces"**(세리프, 묵직한 잡지 헤드라인) — 한영 혼용 시 한글은 Pretendard Variable, 큰 제목 라틴 단어만 Fraunces. 폴백: 제목 `Pretendard, "Noto Serif KR", serif` / 본문 `Pretendard, system-ui, sans-serif` |
+-| **핵심 색 성격 1개** | 차분한 잉크(거의 검정에 가까운 짙은 남회색) 본문 + 따뜻한 종이 배경. 액센트는 절제된 1색. |
+-| **핵심 색 앵커(OKLCH, 장식면용)** | ink `oklch(0.22 0.02 250)` · paper `oklch(0.98 0.008 85)` · accent(절제) `oklch(0.50 0.13 25)`(벽돌/적포도) |
++| **핵심 색 성격 1개** | 차분한 잉크(거의 검정에 가까운 짙은 남회색) 본문 + 따뜻한 종이 배경. 액센트는 절제된 1색도, 대담한 고채도·다색도 가능(캡 없음). |
++| **핵심 색 앵커(OKLCH, 장식면용)** | ink `oklch(0.22 0.02 250)` · paper `oklch(0.98 0.008 85)` · accent 절제형 `oklch(0.50 0.13 25)`~대담형 `oklch(0.60 0.24 25)`(벽돌/적포도, 고채도 허용) |
+ | **레이아웃 컨셉** | 비대칭 다단 그리드. 굵은 헤드라인 + 부제(데크) + 본문 칼럼. 넉넉한 행간, 명확한 3단 위계(제목→리드→본문). 좌우 여백 비대칭으로 "사람이 짠 지면" 느낌. |
+ | **이럴 때 추천** | 동료들이 받아 **차분히 읽는** 분석 보고서·긴 글·문서 — 결론과 근거가 위계로 또렷이 구분돼 신뢰감 있게 읽힌다. |
+ | **안 어울리는 경우** | 빔프로젝터 발표(뒷자리 가독 약함, editorial-bold가 적합) · 강한 임팩트가 필요한 마케팅 히어로 · 클릭/입력 중심 인터랙티브 앱. |
+ 
+ **미리보기 마크업** (인라인 SVG 썸네일 — 그대로 카드에 삽입):
+ ```html
+ <svg viewBox="0 0 300 200" role="img" aria-label="에디토리얼 미리보기: 큰 잡지 제목과 정돈된 2단 본문"
+      xmlns="http://www.w3.org/2000/svg" style="border:1px solid #e5e0d8;border-radius:6px;background:#faf7f0">
+   <text x="20" y="44" font-family="Georgia, 'Noto Serif KR', serif" font-size="30" font-weight="700" fill="#262433">Headline</text>
+   <rect x="20" y="58" width="180" height="6" rx="3" fill="#8a8478"/>
+@@ -63,24 +63,24 @@ SSOT §1-1, §2 예시질문 2번을 따른다. 미적 방향은 **3개로 좁
+ 
+ ---
+ 
+ ## 2. luxury (럭셔리 = 여백 많고 절제된 고급 느낌)
+ 
+ | 항목 | 내용 |
+ |------|------|
+ | **한 줄 일상어 설명** | 명품 브랜드 안내서처럼, 넓은 빈 공간과 가는 글씨로 "고급스럽고 믿을 만하다"는 인상을 주는 느낌 (절제된 우아함) |
+ | **무드 키워드 3개** | 절제된 · 신뢰감 · 품격 있는 |
+ | **대표 폰트페어** | 본문/한글: **Pretendard**(Light~Regular 위주) · 제목 영문: **"Cormorant Garamond"**(가늘고 우아한 세리프) 또는 **"Libre Caslon"** — 큰 여백 + 가는 굵기 대비. 폴백: 제목 `Pretendard, "Nanum Myeongjo", serif` / 본문 `Pretendard, system-ui, sans-serif` |
+-| **핵심 색 성격 1개** | 보수적 중성(짙은 남색·차콜) 베이스 + 절제된 메탈릭/딥 액센트 1색(딥네이비 or 와인 or 절제된 골드). 화면당 액센트 1~2개(60-30-10 엄수). |
+-| **핵심 색 앵커(OKLCH, 장식면용)** | base ink `oklch(0.25 0.03 265)`(차콜 네이비) · canvas `oklch(0.99 0.003 270)` · accent `oklch(0.45 0.07 265)`(딥 네이비) 또는 `oklch(0.55 0.09 75)`(절제된 골드, 장식 한정) |
++| **핵심 색 성격 1개** | 깊은 중성(짙은 남색·차콜) 베이스 + 메탈릭/딥 액센트. 절제된 1색도, 대담한 고채도·다색도 모두 가능(취향에 따라). accent 개수·면적 캡 없음(60-30-10은 선택적 균형 가이드). |
++| **핵심 색 앵커(OKLCH, 장식면용)** | base ink `oklch(0.25 0.03 265)`(차콜 네이비) · canvas `oklch(0.99 0.003 270)` · accent 절제형 `oklch(0.45 0.07 265)`~대담형 `oklch(0.60 0.22 265)`(고채도 허용, 장식면 C 최대 ~0.30) 또는 골드 `oklch(0.70 0.16 85)` |
+ | **레이아웃 컨셉** | 극단적 여백(여백이 콘텐츠를 "받쳐주는" 구조). 중앙 또는 좌측 정렬 단일 칼럼. 가는 구분선, 작은 캡션, 큰 여백 사이의 핵심 1문장. 스크롤 없는 1페이지 응축. |
+-| **이럴 때 추천** | 결정을 내리는 **윗분(C레벨·이사회)** 보고서 — 화려함 대신 "믿을 만하다"는 인상과 핵심만 또렷한 구조가 신뢰를 만든다. |
++| **이럴 때 추천** | 결정을 내리는 **윗분(C레벨·이사회)** 보고서 — 넓은 여백과 또렷한 구조가 신뢰를 만든다. (절제가 기본 무드지만 대담한 색·임팩트도 자유롭게 얹을 수 있다 — 글씨 대비만 유지.) |
+ | **안 어울리는 경우** | 정보 밀도 높은 대시보드·데이터 표(여백이 정보를 밀어냄) · 발랄한 마케팅 · 색·밀도가 많이 필요한 차트 페이지. |
+ 
+ **미리보기 마크업**:
+ ```html
+ <svg viewBox="0 0 300 200" role="img" aria-label="럭셔리 미리보기: 넓은 여백 가운데 가는 제목 한 줄"
+      xmlns="http://www.w3.org/2000/svg" style="border:1px solid #e8e8ee;border-radius:6px;background:#fdfdff">
+   <line x1="40" y1="48" x2="120" y2="48" stroke="#9aa0b4" stroke-width="1"/>
+   <text x="40" y="90" font-family="Garamond, 'Nanum Myeongjo', serif" font-size="26" letter-spacing="2" fill="#26304a">Exclusive</text>
+   <text x="40" y="112" font-family="system-ui" font-size="9" letter-spacing="3" fill="#6a7488">CONFIDENTIAL · 2026</text>
+   <line x1="40" y1="150" x2="260" y2="150" stroke="#e2e4ec" stroke-width="1"/>
+@@ -150,23 +150,23 @@ SSOT §1-1, §2 예시질문 2번을 따른다. 미적 방향은 **3개로 좁
+ 
+ ---
+ 
+ ## 5. soft-modern (소프트 모던 = 부드럽고 친근한 요즘 앱 느낌)
+ 
+ | 항목 | 내용 |
+ |------|------|
+ | **한 줄 일상어 설명** | 요즘 인기 있는 모바일 앱처럼, 둥근 모서리와 부드러운 색·은은한 그림자로 친근하고 다루기 편한 느낌 (편안·신뢰) |
+ | **무드 키워드 3개** | 친근한 · 부드러운 · 편안한 |
+ | **대표 폰트페어** | 전체: **Pretendard**(Regular~SemiBold). 영문 동반 시 **"Plus Jakarta Sans"** 또는 Pretendard 라틴. 폴백: `Pretendard, system-ui, -apple-system, sans-serif` |
+-| **핵심 색 성격 1개** | 채도 낮춘 파스텔/세미-뮤트 브랜드색 + 밝은 회백 배경 + 부드러운 1px 그림자. 60-30-10으로 액센트 절제. |
+-| **핵심 색 앵커(OKLCH, 장식면용)** | brand `oklch(0.62 0.13 250)`(부드러운 블루) · surface `oklch(0.985 0.004 250)` · raised `oklch(1 0 0)` · ink `oklch(0.28 0.02 250)` |
+-| **레이아웃 컨셉** | 둥근 카드(반경 10~16px), 은은한 그림자(blur 8~16, 불투명도 낮게), 넉넉한 패딩, 친근한 마이크로 인터랙션(≤250ms, reduced-motion 폴백). 카드 기반 정보 그룹. |
++| **핵심 색 성격 1개** | 파스텔/세미-뮤트도, 대담한 고채도 브랜드색·다색도 가능(캡 없음) + 밝은 회백 배경 + 부드러운 그림자. 60-30-10은 선택적 가이드. |
++| **핵심 색 앵커(OKLCH, 장식면용)** | brand `oklch(0.62 0.13 250)`(부드러운 블루)~`oklch(0.65 0.26 250)`(대담한 블루, 고채도 허용) · surface `oklch(0.985 0.004 250)` · raised `oklch(1 0 0)` · ink `oklch(0.28 0.02 250)` |
++| **레이아웃 컨셉** | 둥근 카드(반경 10~16px), 그림자(은은~깊은 글래스모피즘 자유), 넉넉한 패딩, 마이크로 인터랙션 + 스크롤리빌·카운트업 등 장식 모션 자유(reduced-motion 폴백 필수). 카드 기반 정보 그룹. |
+ | **이럴 때 추천** | 사람들이 클릭·입력하며 **실제로 쓰는 웹앱**(대시보드·폼·설정) — 둥근 카드와 부드러운 색이 "다루기 쉽다"는 안심을 줘 사용성이 올라간다. |
+ | **안 어울리는 경우** | 극도의 격식이 필요한 이사회 보고(가벼워 보임) · 거친 임팩트가 목표인 캠페인 · 흑백 인쇄 전제 문서(그림자·파스텔이 인쇄에서 사라짐). |
+ 
+ **미리보기 마크업**:
+ ```html
+ <svg viewBox="0 0 300 200" role="img" aria-label="소프트 모던 미리보기: 둥근 카드와 부드러운 그림자, 파란 버튼"
+      xmlns="http://www.w3.org/2000/svg" style="border:1px solid #eef0f5;border-radius:8px;background:#f7f8fb">
+   <defs><filter id="sm-shadow" x="-20%" y="-20%" width="140%" height="160%">
+     <feDropShadow dx="0" dy="3" stdDeviation="4" flood-color="#1b2a5e" flood-opacity="0.12"/></filter></defs>
+   <rect x="20" y="26" width="160" height="62" rx="14" fill="#fff" filter="url(#sm-shadow)"/>
+@@ -273,28 +273,28 @@ SVG 썸네일로 부족하면, 아래처럼 **실제 HTML 미니 스냅샷**을
+ ---
+ 
+ ## 9. 도메인별 기본 추천 매핑 (런타임 분기 표)
+ 
+ > SSOT §4 도메인 매트릭스 + §6 매핑 지시에 정합. **★ = 도메인 자동 추정 시 디폴트 선택 상태**. 인접 후보 2개를 함께 제시해 사용자가 그림으로 고른다. "기타"는 확정 질문 전 산출 금지(Intent Gate).
+ 
+ | 도메인 (SSOT §4) | ★ 기본 방향 | 인접 후보 2개 | 왜 그 도메인에 맞는지 (효과 1문장) |
+ |------------------|-------------|----------------|--------------------------------------|
+ | **웹앱(프론트엔드)** §4.1 | ★ **soft-modern** | technical · minimal | 둥근 카드·부드러운 색이 "다루기 쉽다"는 안심을 줘, 클릭·입력하는 사람이 화면을 덜 무서워하고 더 잘 쓰게 한다. (데이터 밀도 높은 관제형이면 technical로 전환) |
+ | **공유용 분석 보고서** §4.2 | ★ **editorial** | soft-modern · technical | 잡지식 3단 위계(제목→리드→근거)가 "무슨 일이 일어났는지"를 차분히 읽게 해, 여러 동료가 결론과 데이터를 헷갈림 없이 따라온다. |
+-| **C레벨·이그제큐티브 보고서** §4.3 | ★ **luxury** | editorial · minimal | 넓은 여백과 절제된 중성색이 "화려함이 아니라 믿을 만함"을 전해, 결정을 내리는 윗분이 핵심만 또렷이 보고 신뢰한다. |
++| **C레벨·이그제큐티브 보고서** §4.3 | ★ **luxury** | editorial · minimal · editorial-bold | 넓은 여백과 또렷한 구조가 결정을 내리는 윗분에게 신뢰를 준다. ★는 디폴트일 뿐 **대담한 색·임팩트도 1급 옵션**(글씨 대비만 유지). |
+ | **발표 PPT 덱(HTML)** §4.4 | ★ **editorial-bold** | luxury · brutalist | 큰 한 문장과 고대비가 빔 뒷자리까지 읽히고 한 장=한 주장이라, 말로 설명하는 발표의 흐름이 끊기지 않는다. (강한 캠페인 톤이면 brutalist 검토) |
+ | **기타** §4.5 | (없음) → **확정 질문 먼저** | 추정된 가장 가까운 도메인의 ★를 임시 제안 | 도메인이 확정돼야 위 매핑이 작동한다 — "이거 맞죠?" 1문항으로 도메인을 먼저 고정하고, 마케팅·설득이면 가독성 하한선 위에서 editorial-bold/brutalist의 임팩트를 상향 허용. |
+ 
+ ### 9.1 분기 규칙 (에이전트 결정 로직)
+ 1. 도메인 자동 추정(첨부 심층 검토) → 위 표에서 **★ + 인접 2개**를 후보로 확정.
+ 2. 질문 게이트 2번에서 3개를 그림 카드로 제시(★ 선택 상태). 사용자가 ★를 넘기면 그대로 채택.
+-3. **데이터 정직성·격식이 충돌하면 격식 우선**: 임원 보고에서 사용자가 brutalist를 골라도, 무결성 게이트(anti-slop + APCA·WCAG)는 본문 대비·절제를 강제한다 — 미적 대담함은 장식 면에만, 텍스트·의미색은 성역(SSOT §0-2).
++3. **대담함은 모든 도메인 허용, 단 텍스트 대비는 성역**: 임원 보고에서 사용자가 brutalist·고채도·다색을 골라도 허용한다. 무결성 게이트가 강제하는 것은 **본문 텍스트·UI·의미색의 APCA AND WCAG 대비와 reduced-motion 폴백뿐**(절제 강제 아님). 즉 "고채도 면 위 텍스트가 대비 미달"이면 텍스트색만 게이트 통과값으로 강등하고, 고채도 면·대담한 색 자체는 그대로 둔다(SSOT §0-2).
+ 4. **빔/인쇄 환경 신호**가 잡히면(질문 4번 응답) editorial-bold·인쇄안전 토큰으로 대비 상향.
+ 5. 선택 결과를 art-brief-template.md에 박고, 핵심 색 앵커를 color-token-contract.md reference 입력으로 넘긴다.
+ 
+ ### 9.2 방향 간 안전 강등 표 (게이트 충돌 시)
+ | 사용자가 고른 방향 | 게이트 위반 위험 | 자동 강등(보정) |
+ |--------------------|------------------|------------------|
+ | brutalist / editorial-bold | 고채도 면 위 텍스트 대비 미달 | 텍스트는 게이트 통과 ink로 강등, 고채도는 **장식 면(no-text)** 으로만 유지 |
+ | luxury | 가는 폰트 + 저대비 본문 | 본문 굵기·대비 상향(APCA Lc≥75), 가는 폰트는 큰 제목에만 |
+ | technical | 의미색만으로 상태 구분 | 색 외 직접 라벨·아이콘 이중인코딩 추가(CVD 안전) |
+ | soft-modern | 그림자·파스텔이 흑백 인쇄에서 소실 | @media print에서 보더·고대비로 reference 스왑 |
+@@ -306,11 +306,11 @@ SVG 썸네일로 부족하면, 아래처럼 **실제 HTML 미니 스냅샷**을
+ | 방향 | 한 줄 | 무드 | ★ 도메인 |
+ |------|-------|------|----------|
+ | editorial | 잡지 레이아웃 | 정제·신뢰·읽기좋은 | 분석 보고서 |
+ | luxury | 여백 많은 고급 | 절제·신뢰·품격 | C레벨 보고서 |
+ | minimal | 군더더기 없음 | 깔끔·또렷·집중 | (웹앱/문서 무난) |
+ | brutalist | 거친 강한 인쇄물 | 대담·솔직·강렬 | 캠페인 랜딩 |
+ | soft-modern | 친근한 요즘 앱 | 친근·부드러움·편안 | 웹앱 |
+ | technical | 데이터 대시보드 | 정밀·신뢰·밀도 | 대시보드/데이터 화면 |
+ | editorial-bold | 큰 발표 화면 | 또렷·자신감·한눈 | 발표 PPT 덱 |
+ 
+-> **공통 하한선(모든 방향 불변)**: 한글 Pretendard 1순위 + system-ui 폴백 / `word-break: keep-all` / `line-height ≥1.6` / 본문 APCA Lc≥75 AND WCAG 4.5:1 / 60-30-10 액센트 절제 / reduced-motion 폴백 / 무빌드 더블클릭. 미적 자유는 **이 하한선 위에서만** 작동한다.
++> **공통 하한선(모든 방향 불변)**: 한글 Pretendard 1순위 + system-ui 폴백 / `word-break: keep-all` / `line-height ≥1.6` / 본문 APCA Lc≥75 AND WCAG 4.5:1 / reduced-motion 폴백 / 무빌드 더블클릭. 미적 자유(대담한 색·고채도·다색 accent·그라데이션·장식 모션·글래스/틸트)는 **이 하한선 위에서 모든 도메인 허용**된다. (60-30-10·accent 개수는 더 이상 하한선이 아니라 비차단 제안.)
+diff --git a/references/anti-slop-checklist.md b/references/anti-slop-checklist.md
+index 3fcad95..3213bea 100644
+--- a/references/anti-slop-checklist.md
++++ b/references/anti-slop-checklist.md
+@@ -50,45 +50,48 @@ grep -niE "repeat\(3, *1fr\)|grid-template-columns: *1fr +1fr +1fr|repeat\(auto-
+ grep -nP "[\x{1F300}-\x{1FAFF}\x{2600}-\x{27BF}\x{2190}-\x{21FF}\x{2B00}-\x{2BFF}]" *.html
+ 
+ # A5 가운데정렬 hero — text-align:center + 큰 제목 + 제네릭 일러스트(unDraw/blob)
+ grep -niE "text-align: *center" *.html *.css
+ grep -niE "undraw|storyset|drawkit|blob|illustration|hero-image|placeholder" *.html *.css
+ 
+ # A6 톤 없는 회색 박스 — #fff/#f0~#f9 카드 + 옅은 회색 테두리 + 동일 그림자
+ grep -niE "background: *#(fff|f[0-9a-f]f[0-9a-f]?f?|fafafa|f5f5f5|eee)|border: *1px +solid +#(ddd|eee|e[0-9a-f]e[0-9a-f])" *.html *.css
+ grep -niE "box-shadow: *0 +[0-9]+px +[0-9]+px +rgba\(0, *0, *0, *0\.0?[0-9]" *.html *.css   # 흔한 0,0,0,0.0x 회색 그림자
+ 
+-# A7 accent 3개+ 남발(60-30-10 위반) — accent 토큰/색 사용처가 3종 이상
+-grep -nioE "var\(--color-accent[^)]*\)|--accent-?[0-9a-z]*" *.html *.css | sort -u   # 서로 다른 accent 변수 수 세기
+-grep -ncE "var\(--color-(brand|accent)" *.html   # 강조색 총 사용 횟수(과다 출현 신호)
++# A7 (완화됨 — BLOCK 아님) accent 다색/대담 팔레트는 허용. 60-30-10은 비차단 제안.
++# 아래는 참고용 스캔일 뿐 적발 도구가 아니다(다색 자체는 위반이 아니다).
++grep -nioE "var\(--color-accent[^)]*\)|--accent-?[0-9a-z]*" *.html *.css | sort -u   # 서로 다른 accent 변수 수(참고)
++grep -ncE "var\(--color-(brand|accent)" *.html   # 강조색 총 사용 횟수(참고)
+ 
+ # A8 명사구 차트 제목 — <figcaption>/차트 title이 "월별 매출" 같은 명사구(동사·결론 없음)
+ grep -niE "<figcaption[^>]*>|<h[2-6][^>]*>.{0,40}(현황|추이|분포|비율|통계|매출|지표|데이터)</" *.html
+ 
+-# A9 무의미 통통 모션 — bounce/pulse/wobble/float 무한 반복, 의미 없는 scale 키프레임
+-grep -niE "animation[^;]*(bounce|pulse|wobble|float|shake|infinite)|@keyframes +(bounce|pulse|wobble|float)" *.html *.css
+-grep -niE "transition[^;]*[0-9]+ms[^;]*ease.*all|animation-duration: *[3-9][0-9]{2,}ms|animation-duration: *[0-9.]+s" *.html *.css  # 250ms 초과·all 트랜지션
++# A9 (완화됨 — 장식 모션은 허용) 스크롤리빌·카운트업·패럴랙스·앰비언트 루프는 길이·반복 제한 없음.
++# 유일한 BLOCK은 reduced-motion 폴백 누락 — 그것만 잡는다.
++grep -niE "@media \(prefers-reduced-motion" *.html *.css  # reduced-motion 폴백이 있나?(없으면 A9 BLOCK)
+ ```
+ 
+ > **한계**: grep은 보라색 색상각(H)이나 "균등함"을 완벽히 잡지 못한다. 1차 후보를 §2 정의로 사람이 확정한다. 색 판정이 애매하면 `color-token-contract.md`의 OKLCH H값(보라≈270~330)으로 역산해 확인한다.
+ 
+ ---
+ 
+ ## 2. BLOCK 항목 9선 (각: 징후 / 왜 slop인가 / 교체안)
+ 
+-### A1. 보라 그라데이션 on 화이트 (Purple gradient on white)
++### A1. (완화됨 · BLOCK 아님 · 비권장 메모) 보라 그라데이션 on 화이트 (Purple gradient on white)
++
++> **이 항목은 더 이상 BLOCK이 아니다.** 그라데이션은 다중 정지점·비비드 포함 **의도적 선택으로 일반 허용**한다(화려함 잠금 해제). 아래는 출고를 막지 않는 **연성 권고(advisory)** 일 뿐이다.
+ 
+ | 구분 | 내용 |
+ |------|------|
+-| **징후** | 흰/거의 흰 배경 위, 인디고~보라(H≈270~300) 계열 `linear-gradient`. 특히 버튼·hero 배경·카드 헤더에 보라→파랑 또는 보라→분홍 그라데이션. `#6366f1`, `#8b5cf6`, `#a855f7` 류 + `linear-gradient(135deg, ...)`. |
+-| **왜 slop인가** | 2021~2024 노코드/AI 스타터 템플릿(Vercel·Linear 모방 다수)의 사실상 디폴트. "방금 부트스트랩한 SaaS" 인상을 줘 **의도성이 0**으로 읽힌다. 보라 그라데이션은 브랜드 의미가 아니라 "고를 줄 몰라서 고른 색"의 대명사가 됐다. |
+-| **교체안** | (1) **단색 + 면 대비**로 전환: 그라데이션 대신 art brief 무드 색 1개의 평면 채움. 깊이는 그라데이션이 아니라 **여백·크기·굵기**로 만든다(skill-spec §0-2). (2) 그라데이션이 꼭 필요하면 **동일 색상각 내 명도 그라데이션**(예: 같은 H, L만 차이)으로 한정하고 채도를 art brief의 data/expression zone 규칙에 맞춘다. (3) 색은 임의 hex가 아니라 `var(--color-brand-500)` 등 토큰에서만(`token-system.md`, raw hex 금지). (4) 보라가 정말 브랜드 색이라면 art brief에 그 근거 1문장을 박는다 — 근거 없는 보라는 BLOCK. |
++| **연성 권고** | 그라데이션 자체는 자유다. 다만 "인디고/보라 그라데이션 on 평범한 흰 SaaS-hero"(`#6366f1`/`#8b5cf6`/`#a855f7` + `linear-gradient(135deg, ...)`)는 2021~2024 노코드/AI 스타터 템플릿에서 과용된 클리셰라, **기본으로는 피하기를 권한다**(다른 색·각도·구성으로 차별화하면 더 좋다). 이는 권고이지 BLOCK이 아니다. |
++| **자유 허용** | 대담한 다색 그라데이션, gradient mesh, 비비드 채움, 그라데이션 버튼·hero·카드 헤더 모두 허용. 색은 토큰에서 뽑는 것을 권장하나(`token-system.md`) 이 미적 선택 자체로는 출고를 막지 않는다. |
++| **유지되는 성역** | 그라데이션/이미지 위에 **텍스트**가 올라오면 대비는 여전히 APCA AND WCAG 이중 게이트의 성역이다(가장 불리한 지점에서 측정). 미적 자유는 장식 면에, 텍스트 대비는 불변. |
+ 
+ ### A2. 기본 폰트 방치 (Inter / Roboto / system 무개입)
+ 
+ | 구분 | 내용 |
+ |------|------|
+ | **징후** | `font-family`가 `Inter` 또는 `Roboto` 단독, 혹은 `system-ui, -apple-system, Segoe UI, Arial`만으로 끝. 제목과 본문이 **같은 폰트·같은 굵기**. 한국어 본문에 폰트 지정이 없어 OS 기본(맑은 고딕 등)으로 떨어짐. |
+ | **왜 slop인가** | Inter/Roboto/system 단독은 "타이포에 아무 결정도 하지 않았다"는 신호다. 사람이 다듬은 디자인은 거의 항상 **제목/본문 폰트페어** 또는 최소한 **굵기·자간·크기 대비**를 의도적으로 준다. 무개입 타이포는 슬롭의 가장 조용한 형태다. |
+ | **교체안** | (1) art brief 무드에 맞는 **폰트페어 1쌍** 지정: 예) editorial=세리프 제목(Source Serif/Newsreader)+산세리프 본문, technical=Space Grotesk/IBM Plex, luxury=절제된 세리프+넓은 자간. (`aesthetic-directions.md`의 폰트페어 매핑 사용). (2) **한국어는 Pretendard 서브셋 woff2 동봉**, 없으면 `Pretendard, "Pretendard Variable", system-ui` 폴백 스택 + `word-break:keep-all`(`build-boilerplate.md`). (3) 폰트 추가가 불가능한 환경이면 **최소 위계라도**: 제목 700/본문 400, 제목 자간 -0.02em, 본문 line-height 1.6+로 "의도"를 만든다. system-ui 단독으로 끝내지 않는다. |
+ 
+ ### A3. 균등 3카드 그리드 (Equal 3-up card grid)
+@@ -116,80 +119,87 @@ grep -niE "transition[^;]*[0-9]+ms[^;]*ease.*all|animation-duration: *[3-9][0-9]
+ | **교체안** | (1) **비대칭 hero**: 텍스트 좌측 정렬 + 우측에 실제 제품 스크린샷/데이터 미리보기/추상 기하 패턴(인라인 SVG). 또는 텍스트만으로도 타이포 스케일·여백으로 강렬하게. (2) 제네릭 일러스트 **삭제** — 실제 콘텐츠(차트·UI 캡처·실제 수치)로 대체. (3) 가운데정렬은 발표 슬라이드 표지(expression zone, skill-spec §4.4)처럼 의도가 분명할 때만. 정보 밀도 화면에선 좌측 정렬 기준선이 가독을 높인다. (4) 일러스트가 꼭 필요하면 art brief 무드 색으로 **직접 그린 인라인 SVG 추상 패턴**(grain·gradient mesh 절제)으로. |
+ 
+ ### A6. 톤 없는 회색 박스 (Tone-less gray boxes)
+ 
+ | 구분 | 내용 |
+ |------|------|
+ | **징후** | `#fff`/`#f9fafb`/`#f5f5f5` 배경 + `1px solid #e5e7eb` 테두리 + `box-shadow: 0 1px 3px rgba(0,0,0,0.1)` 카드가 화면을 덮음. 배경·카드·테두리가 전부 **채도 0의 회색 계열**이라 어디에도 무드가 없다. |
+ | **왜 slop인가** | 순수 무채색 회색은 "색 결정을 안 했다"는 디폴트다. 사람이 다듬은 UI는 중성색에도 **미세한 색온도**(따뜻한 회색/차가운 회색, OKLCH로 약한 C 부여)를 넣어 무드를 입힌다. 회색 박스 천국은 슬롭의 배경음이다. |
+ | **교체안** | (1) **중성색에 색온도 주입**: `color-token-contract.md`의 OKLCH 앵커에서 brand H를 살짝 머금은 회색 램프 파생(예: 차가운 무드면 H≈250의 C≈0.01 회색). 순수 `#808080` 금지. (2) **면 분리는 그림자가 아니라 배경 명도 단차 + 여백**으로(skill-spec §0-2). 모든 카드 동일 그림자는 위계를 안 만든다 — 강조 카드만 그림자/테두리 차별. (3) 테두리·배경·그림자가 다 회색이면 최소 1개를 무드 색으로 교체(예: 강조 카드 좌측 2px brand 보더). (4) 모든 색은 토큰에서만(raw hex 금지, `token-system.md`). |
+ 
+-### A7. accent 3개+ 남발 (60-30-10 위반)
++### A7. (완화됨 · BLOCK 아님 · 비차단 제안) accent 다색·60-30-10
++
++> **이 항목은 더 이상 BLOCK이 아니다.** accent 개수 캡(<=2 앵커)·면적 캡(<=10%)·"3개 이상 = BLOCK"을 **모두 제거**한다. 대담한 색·다색(multi-accent) 팔레트를 **허용**한다(화려함 잠금 해제). 60-30-10은 **비차단 균형 제안**으로 남는다.
+ 
+ | 구분 | 내용 |
+ |------|------|
+-| **징후** | 한 화면에 서로 다른 강조색(accent)이 3종 이상 — 파랑 버튼 + 초록 배지 + 주황 알림 + 보라 링크가 다 동시에 진하게. 60-30-10 비율(중성 60 / 보조 30 / 강조 10)이 깨져 강조색 면적이 10%를 크게 넘음. |
+-| **왜 slop인가** | "모든 게 강조면 아무것도 강조가 아니다." accent 남발은 **시선 우선순위를 설계하지 않은** 슬롭이다. 색이 많을수록 전문성이 아니라 미숙함으로 읽힌다. 60-30-10은 skill-spec §4.3·§8-3의 secure-by-default 하한선이다. |
+-| **교체안** | (1) **accent 1개로 강제 축소**(C레벨·보고서는 화면당 1~2개, skill-spec §4.3). 나머지 "강조"는 중성색 + 굵기/크기로 위계. (2) 의미색(성공/경고/오류)은 accent와 **역할 분리**: 의미색은 상태 전달 전용(`color-token-contract.md` 의미 스케일), 브랜드 accent는 행동 유도 전용. (3) 색 사용 면적을 **60-30-10으로 재배분**: 중성 배경/텍스트 60%, 보조 톤 30%, brand accent ≤10%. (4) 차트 색은 별도 네임스페이스(`color.viz.categorical.1~8`, CVD안전 8색 이내, `token-system.md`) — UI accent와 섞지 않는다. |
++| **자유 허용** | 한 화면에 여러 강조색을 의도적으로 쓰는 다색 팔레트, 대담한 색면 모두 허용. accent 개수·면적에 하드 캡이 없다. |
++| **비차단 제안(선택)** | 시선 우선순위가 흐려진다고 느끼면 60-30-10(중성 60 / 보조 30 / 강조 10)을 **선택적 균형 가이드**로 참고할 수 있다 — 그러나 이를 어겨도 BLOCK이 아니다. |
++| **여전히 권장(BLOCK 아님)** | 의미색(성공/경고/오류)은 브랜드 accent와 **역할을 분리**하면 더 명확하다(의미색=상태 전달, accent=행동 유도). 차트 색은 별도 네임스페이스(`color.viz.categorical.1~8`)로 두면 좋다. 이는 좋은 습관일 뿐 강제 게이트가 아니다. |
++| **유지되는 성역** | 색을 아무리 대담하게 써도 **텍스트·UI·의미색의 대비**는 APCA AND WCAG 이중 게이트를 통과해야 하고(불변), 의미색은 색 외 이중 인코딩(CVD 안전)이 여전히 필수다. |
+ 
+ ### A8. 명사구 차트 제목 (Noun-phrase chart titles)
+ 
+ | 구분 | 내용 |
+ |------|------|
+ | **징후** | 차트/표 제목이 "월별 매출", "사용자 추이", "지역별 분포" 같은 **명사구**(동사·결론 없음). `figcaption`이나 차트 위 제목이 무엇을 보라는 결론을 말하지 않고 주제만 라벨링. |
+ | **왜 slop인가** | 명사구 제목은 "데이터를 그려는 놨는데 **무슨 말을 하려는지는 안 정했다**"는 슬롭이다. 사람이 다듬은 보고서는 차트마다 **결론형 takeaway title**을 단다(skill-spec §4.2·§4.3, `chart-decision.md`). 독자가 "그래서 뭐?"를 스스로 풀게 두는 건 미완성이다. |
+ | **교체안** | (1) **결론형 문장으로 교체**: "월별 매출" → "3분기 매출이 전년 대비 18% 증가했다", "지역별 분포" → "수요의 절반이 수도권에 집중된다". 주어+동사+핵심 수치. (2) 슬라이드/섹션은 **1주장 = 1결론 제목**(skill-spec §4.4). (3) 명사형 주제는 부제/캡션으로 내리고 제목 자리엔 결론을. (4) 결론이 안 떠오르면 그 차트가 정말 필요한지 재검토(`chart-decision.md` 데이터잉크 규율). |
+ 
+-### A9. 무의미 통통 모션 (Gratuitous bouncy motion)
++### A9. (완화됨 · 장식 모션 허용 · reduced-motion만 BLOCK) 모션
++
++> **모션 캡을 제거했다.** "bounce/pulse/wobble/float 무한 금지", ">250ms 금지", "진입 1회" 금지를 **모두 해제**한다. **장식 모션**(scroll-reveal·count-up·parallax·앰비언트 루프)은 **길이 제한 없이, 반복(루프)도 허용**한다(화려함 잠금 해제). **유일하게 남는 BLOCK은 reduced-motion 폴백 누락**이다(접근성 성역).
+ 
+ | 구분 | 내용 |
+ |------|------|
+-| **징후** | `animation: bounce/pulse/wobble/float ... infinite`로 요소가 끝없이 튀거나 둥둥 뜸. `transition: all 0.4s ease`로 모든 속성이 같이 움직임. hover 시 과한 scale(1.1+)·회전. duration이 250ms 초과거나 무한 반복. `prefers-reduced-motion` 미대응. |
+-| **왜 slop인가** | 의미 없는 모션은 "움직이면 멋있어 보이겠지"라는 슬롭이다. 사람이 다듬은 모션은 **상태 변화를 설명하는 1회·짧은(≤250ms)** 움직임만 쓴다(art brief 모션 예산: 1회·≤250ms·reduced-motion 0, skill-spec §2). 무한 통통 모션은 주의를 분산시키고 접근성을 해친다(전정 장애). |
+-| **교체안** | (1) **무한 애니메이션 제거**. 모션은 상태 전환(나타남·강조·피드백)에만, **1회·≤250ms**. (`build-boilerplate.md` Tier1: transform/opacity만). (2) `transition: all` → **속성 한정**(`transition: transform 180ms ease, opacity 180ms ease`). (3) hover scale은 1.02~1.04로 절제, 회전 금지. (4) **`@media (prefers-reduced-motion: reduce)` 폴백 필수** — 모션 0으로 떨어뜨림(`a11y-checklist.md`, 누락 시 axe/CVD 게이트와 별개로 여기서도 BLOCK). (5) 토큰 사용: `var(--motion-duration-base)`, raw px/ms 하드코딩은 토큰 lint(`token-system.md`)에서도 잡힌다. |
++| **자유 허용(장식 모션)** | 스크롤리빌, 카운트업, 패럴랙스, 앰비언트/무한 루프, 긴 지속 시간의 장식 애니메이션 모두 허용. hover scale·회전 등 표현적 모션도 자유. |
++| **기능 UI 피드백 기본값** | 기능적 UI 전환(상태 변화·피드백)에는 `--motion-duration-fast`(120ms)·`--motion-duration-base`(200ms)를 **기본값**으로 권장한다(반응 지연 없는 느낌). 이는 권장 기본값이지 장식 모션의 상한이 아니다. |
++| **BLOCK (유지)** | **`@media (prefers-reduced-motion: reduce)` 폴백 필수** — reduced 사용자에게 모션 0(또는 무해)으로 떨어뜨려야 한다. 장식 모션이 아무리 길거나 루프해도 이 폴백이 없으면 **BLOCK**(전정 장애 사용자 보호, `a11y-checklist.md`·`_contract.md`의 `--motion-reduce` 0). |
++| **권장(BLOCK 아님)** | 토큰 사용(`var(--motion-duration-base)` 등)은 여전히 권장한다. raw px/ms 하드코딩은 토큰 lint(`token-system.md`)에서 별도로 다뤄진다. |
+ 
+ ---
+ 
+ ## 3. 도메인별 가중 (Domain weighting)
+ 
+ 9개 항목은 모든 도메인에 적용되지만, 도메인에 따라 **특히 치명적인 항목**이 다르다. 점검 시 가중치를 둔다(skill-spec §4).
+ 
++> 참고: A1(그라데이션)·A7(accent)·A9(모션)는 **완화돼 더 이상 BLOCK이 아니다**(모든 도메인 화려함 허용). 아래 가중은 **여전히 BLOCK인 품질 4항목(A2·A3·A4·A8)과 A5·A6**에 적용된다.
++
+ | 도메인 | 특히 엄격하게 볼 항목 | 이유 |
+ |--------|----------------------|------|
+-| 웹앱 (§4.1) | A3(균등 그리드)·A9(모션) | 인터랙티브 화면일수록 위계·모션 절제가 신뢰를 만든다. |
+-| 분석 보고서 (§4.2) | A8(명사구 제목)·A7(색 남발)·A6(회색 박스) | 결론형 제목·CVD안전 색·data zone 절제가 협상 불가. |
+-| C레벨 보고서 (§4.3) | A1(보라 그라데이션)·A7(accent 남발)·A5(센터 hero) | "신뢰·절제 > 화려함"이 art brief에 못박힌 도메인. 화려함이 곧 감점. |
+-| 발표 PPT (§4.4) | A4(이모지)·A8(명사구 제목)·A9(모션) | 슬라이드당 1주장·결론형 제목·빔 가독. 표지(expression zone)는 A5 가운데정렬 허용 예외. |
+-| 기타 (§4.5) | 확정 도메인의 가중 상속 | 도메인 확정 후 해당 행 적용. 마케팅 랜딩은 가독 하한선 위에서 A5·A9 일부 완화 가능. |
++| 웹앱 (§4.1) | A3(균등 그리드) | 인터랙티브 화면일수록 위계가 신뢰를 만든다. (모션은 자유) |
++| 분석 보고서 (§4.2) | A8(명사구 제목)·A6(회색 박스) | 결론형 제목·CVD안전 색이 협상 불가. (색 대담함은 허용) |
++| C레벨 보고서 (§4.3) | A5(센터 hero) | 임원 보고도 대담한 색·그라데이션 허용 — 다만 결론형 위계는 유지. |
++| 발표 PPT (§4.4) | A4(이모지)·A8(명사구 제목) | 슬라이드당 1주장·결론형 제목·빔 가독. 표지(expression zone)는 A5 가운데정렬 허용 예외. |
++| 기타 (§4.5) | 확정 도메인의 가중 상속 | 도메인 확정 후 해당 행 적용. |
+ 
+-> **expression zone 예외**: art brief가 정의한 expression zone(표지·간지·풀블리드 장식면, `art-brief-template.md`의 no-text AND no-meaning)은 A5(가운데정렬)·A1(그라데이션) 일부를 **무드 자유로 허용**한다. 단 텍스트가 올라오는 순간 성역(APCA AND WCAG)으로 복귀하며, 스크림 오버레이 위 대비를 재측정한다(`a11y-checklist.md`). data zone(차트·표·본문)은 예외 없이 9개 전부 엄격 적용.
++> **expression zone 예외**: art brief가 정의한 expression zone(표지·간지·풀블리드 장식면, `art-brief-template.md`의 no-text AND no-meaning)은 A5(가운데정렬)를 **무드 자유로 허용**한다(A1 그라데이션은 이제 모든 면에서 자유). 단 텍스트가 올라오는 순간 성역(APCA AND WCAG)으로 복귀하며, 스크림 오버레이 위 대비를 재측정한다(`a11y-checklist.md`). data zone(차트·표·본문)도 결론형 제목·대비·CVD는 엄격 적용한다(색·모션 대담함은 모든 zone에서 허용).
+ 
+ ---
+ 
+ ## 4. 의도성 증거 (Intentionality evidence) — 메타 게이트
+ 
+ 위 9개를 모두 통과해도, **각 주요 미적 선택에 "왜 이 폰트/색/레이아웃인가" 1문장 근거가 없으면 그 자체가 slop**이다(skill-spec §8-10). 산출물의 art brief 또는 편집 가이드(`non-dev-copy.md`)에 아래가 채워졌는지 확인한다.
+ 
+ - [ ] 폰트페어 선택 근거 1문장 (예: "임원 신뢰감을 위해 절제된 세리프 제목")
+ - [ ] 강조색(brand accent) 선택 근거 1문장
+ - [ ] 핵심 레이아웃(비대칭/그리드 깸) 근거 1문장
+ - [ ] 모션 사용 시 "무엇을 설명하는 모션인지" 1문장
+ 
+ 근거가 비어 있으면 BLOCK이 아니라 **ASK**(설계자에게 근거 요청)로 분류해 `design-redteam-pro` 루프로 보낸다. 근거 없는 미적 선택은 우연이고, 우연은 슬롭이다.
+ 
+ ---
+ 
+ ## 5. 빠른 요약 (런타임 1줄 체크)
+ 
+-> 출고 전 이 9개를 소리 내어 묻는다. 하나라도 "예"면 멈추고 교체한다.
++> 출고 전 아래를 소리 내어 묻는다. 하나라도 "예"면 멈추고 교체한다.
++> (A1 그라데이션·A7 accent 다색·A9 장식 모션 길이/루프는 **완화돼 더 이상 묻지 않는다** — 화려함 허용.)
+ >
+-> 1. 화이트 위에 보라 그라데이션 있나? (A1)
+ > 2. Inter/Roboto/system 폰트로 끝났나? (A2)
+ > 3. 똑같은 카드 3장이 한 줄로 있나? (A3)
+ > 4. 의미 없는 이모지를 아이콘처럼 썼나? (A4)
+ > 5. 가운데정렬 hero + 흔한 일러스트인가? (A5)
+ > 6. 모든 게 채도 0 회색 박스인가? (A6)
+-> 7. 강조색이 3종 이상 진하게 있나? / 60-30-10 깨졌나? (A7)
+ > 8. 차트 제목이 명사구(결론 없음)인가? (A8)
+-> 9. 무한·과한 통통 모션이 있나? / reduced-motion 폴백 없나? (A9)
++> 9. (모션을 썼는데) reduced-motion 폴백이 없나? (A9 — 폴백 누락만 BLOCK, 길이·루프는 자유)
+ >
+ > 전부 "아니요" → PASS. 사용자에게 "사람이 다듬은 느낌 ✓"로 보고.
+diff --git a/references/art-brief-template.md b/references/art-brief-template.md
+index 186211e..1e523ba 100644
+--- a/references/art-brief-template.md
++++ b/references/art-brief-template.md
+@@ -104,28 +104,28 @@
+ | `________`(이 산출물 고유 면) | `자유 / 성역` | `________` |
+ 
+ > 비개발자 신호: 표지의 큰 색 덩어리는 "마음껏 멋부려도 되는 곳", 본문 글자와 빨강·초록 같은 "뜻 있는 색"은 "절대 안 건드리는 곳"입니다. 그래서 멋지면서도 끝까지 잘 읽힙니다.
+ 
+ ---
+ 
+ ## 4. 모션(움직임) 예산 — 빈칸 채우기 (대부분 고정값)
+ 
+ > 움직임은 "있으면 고급, 많으면 싸구려"다. 그래서 처음부터 예산을 정해 둔다. 아래는 기본 계약이며, 특별한 이유 없으면 그대로 둔다.
+ 
+-| 항목 | 기본값(고정) | 이 산출물 값 |
++| 항목 | 기본값 | 이 산출물 값 |
+ |------|--------------|--------------|
+-| 등장 횟수 | 진입 시 **1회만** (반복·무한 루프 금지) | `1회` |
+-| 지속 시간 | **≤ 250ms** (사람이 "빠르다"고 느끼는 한계) | `≤ ____ms` |
+-| 움직임 줄이기 설정 시 | `prefers-reduced-motion` 켜진 기기에선 **0** (움직임 전부 끔) | `0` |
+-| 허용 종류 | 위치·투명도(transform/opacity)만. 레이아웃 흔들기 금지 | `________` |
++| 장식 모션(스크롤 등장·카운트업·패럴랙스·은은한 루프) | 길이 자유, 반복·무한 루프 **허용** | `자유` |
++| 기능 UI 피드백(호버·포커스·토글 등) | 기본 `120ms`(fast) / `200ms`(base) -- 상한이 아닌 기본값 | `120/200ms` |
++| 움직임 줄이기 설정 시 | `prefers-reduced-motion` 켜진 기기에선 **0** (움직임 전부 끔) -- 필수 | `0` |
++| 허용 종류 | 위치·투명도(transform/opacity) 우선. 레이아웃 흔들기 금지 | `________` |
+ 
+-> 비개발자 신호: 화면이 처음 뜰 때 한 번만 부드럽게 나타나고, 그 뒤엔 가만히 있습니다. "어지러운 거 싫어요" 설정을 켠 분께는 아예 안 움직입니다. — 안 적으면 무결성 게이트의 "의미 없이 통통 튀는 모션" 항목에 걸릴 수 있다.
++> 비개발자 신호: 화면에 보기 좋은 움직임을 마음껏 넣어도 됩니다(천천히 흐르거나 반복돼도 OK). 단 "어지러운 거 싫어요" 설정을 켠 분께는 모든 움직임이 자동으로 멈춥니다.
+ 
+ ---
+ 
+ ## 5. expression zone vs data zone 경계 — 빈칸 채우기
+ 
+ > 한 산출물 안에서도 "마음껏 멋부리는 구역"과 "절제하는 구역"을 나눈다. 표지에서 화려하다가 차트도 화려하면 데이터가 거짓말처럼 보인다.
+ 
+ | 구역 | 성격 | 이 산출물에서 해당하는 곳 |
+ |------|------|---------------------------|
+ | **expression zone** (표현 구역) | 멋·임팩트 자유. 큰 타이포·과감한 색 면·여백 | `표지, 간지, 섹션 도입부…` |
+@@ -186,21 +186,21 @@
+ 
+ ## 8. 작성 완료 체크 (런타임 에이전트용)
+ 
+ art brief를 다음 단계(토큰 정규화·산출)로 넘기기 전 자가 점검. 하나라도 비면 BLOCK.
+ 
+ - [ ] 도메인 확정 + §1 메타 채움(첨부가 있으면 **첨부 활용 의도** ⓐ~ⓓ 분류 포함)
+ - [ ] 무드 키워드 **정확히 3개** + 일상어 병기
+ - [ ] 연상 레퍼런스 1개 이상
+ - [ ] 하지 말 것 **정확히 3개**
+ - [ ] §3 표면 지도: 모든 면이 성역/자유로 분류됨 + "no-text AND no-meaning" 정의 명시
+-- [ ] §4 모션 예산: 1회 · ≤250ms · reduced-motion 0 명시
++- [ ] §4 모션: 장식 모션 길이·반복 자유 / 기능 UI 기본 120·200ms / reduced-motion 0(필수) 명시
+ - [ ] §5 expression/data zone 경계 + 도메인 기본값 반영
+ - [ ] (차트 있으면) §6 표현층/인코딩층 분리 + 인코딩층 고정 규칙 + (해당 시) 정직성 예외 동의 확보
+ - [ ] §7 의도성 증거 4칸 모두 효과 1문장으로 채움
+ 
+ ---
+ 
+ ## 9. 작성 예시 — C레벨 보고서용 luxury brief (완성본)
+ 
+ > 아래는 빈칸을 다 채운 실제 1페이지 예시다. 새 art brief는 이 수준의 구체성으로 작성한다.
+ 
+@@ -222,22 +222,22 @@ art brief를 다음 단계(토큰 정규화·산출)로 넘기기 전 자가 점
+ ### 3. 대비 거부권 표면 지도
+ "no-text AND no-meaning" = 글자가 없고(no-text) 색에 뜻이 없는(no-meaning) 면만 무드 자유, 둘 중 하나라도 있으면 성역.
+ 
+ | 면 | 분류 | 규칙 |
+ |----|------|------|
+ | 본문·KPI 숫자·라벨 글자 | 성역 | APCA Lc≥75 AND WCAG 4.5:1, 흑백 인쇄 대비 안전 |
+ | 상태색(흑자 초록·적자 빨강) | 성역 | 색+부호(+/−)+라벨 이중 인코딩 |
+ | 표지 상단 진한 남색 면 | 자유 | 위에 글자 없음 → 무드대로 진한 채도 OK |
+ | 표지 제목 글자(남색 면 위) | 성역 | 글자 얹힘 → 면이 성역화, 흰 글자 대비 측정 |
+ 
+-### 4. 모션 예산
+-등장 1회 · ≤200ms · prefers-reduced-motion 시 0 · transform/opacity만(표지 제목 페이드인 한 번).
++### 4. 모션
++이 보고서는 격식상 장식 모션을 절제하기로 선택(표지 제목 페이드인 한 번, transform/opacity). 기능 UI는 기본 120/200ms. prefers-reduced-motion 시 0(필수). -- 절제는 이 brief의 선택이며 상한 규칙이 아니다(다른 산출물은 장식 모션을 길게·반복으로 써도 된다).
+ 
+ ### 5. expression / data zone
+ expression zone = 표지·1페이지 요약 도입부(넉넉한 여백·큰 숫자). data zone = 실적 차트·표(3D·그림자·그라디언트 금지, 데이터잉크만). 경계: 표지 남색을 차트 강조색 1개로만 이어 톤 유지, 차트 배경은 무채색.
+ 
+ ### 6. 차트 표현층 / 인코딩층
+ 표현층: Pretendard, 넉넉한 여백, 강조색 남색 1개, 결론형 제목. 인코딩층: 막대 세로축 0 시작 / 분기별 매출=항상 같은 남색 / 흑자·적자는 색+부호+직접 라벨(색맹 안전) / 흑백 인쇄 시 명도로 구분 / 모든 차트에 대체 표 동반. (축 잘림 미사용 — 정직성 예외 동의 불필요.)
+ 
+ ### 7. 의도성 증거
+ | 선택 | 고른 것 | 왜 (효과 1문장) |
+ |------|---------|------------------|
+diff --git a/references/build-boilerplate.md b/references/build-boilerplate.md
+index 1a5ffb3..5b4d284 100644
+--- a/references/build-boilerplate.md
++++ b/references/build-boilerplate.md
+@@ -184,21 +184,21 @@ a{color:inherit;text-decoration-thickness:from-font;}
+   /* ── semantic 층: "역할" 이름 (컴포넌트는 이것만 참조) ── */
+   --bg-page:         var(--color-paper-50);
+   --text-body:       var(--color-ink-900);
+   --accent:          var(--color-brand-500);
+ 
+   /* a11y 1급 토큰 — 경량 모드에서도 생략 금지 (누락 시 lint BLOCK, spec §6 / _contract.md §5) */
+   --focus-ring-color: var(--color-brand-500);
+   --focus-ring-width: 2px;
+   --focus-ring-offset: 2px;
+   --motion-duration-fast: 120ms;
+-  --motion-duration-base: 200ms;   /* 기본값 200ms · 모션 예산 상한 ≤250ms (_contract.md §1) */
++  --motion-duration-base: 200ms;   /* 기능 UI 피드백 기본값(상한 아님). 장식 모션은 길이·반복 자유 (_contract.md §1) */
+   --motion-reduce: 1;              /* reduced 시 0 */
+   --target-size-min: 24px;          /* 터치 최소(권장 44px) */
+ 
+   /* 간격·타이포 (px 하드코딩 대신 토큰) */
+   --space-1:.25rem; --space-2:.5rem; --space-3:1rem; --space-4:1.5rem; --space-6:3rem;
+   --font-sans:"Pretendard", system-ui, -apple-system, "Segoe UI",
+               "Apple SD Gothic Neo", "Malgun Gothic", "맑은 고딕", sans-serif;
+   --leading-body:1.6;
+ }
+ 
+@@ -359,21 +359,21 @@ if (mount) render(html`<${Counter} />`, mount);
+ 
+ ---
+ 
+ ## 7. 비용 계층 (Tier 0 / 1 / 2) — 어떤 효과를 언제 허용하는가
+ 
+ > personality(개성)는 **비용 0 수단부터** 짜낸다. 비싼 장식은 성능 예산을 통과하고 폴백이 있을 때만(spec §6 비용계층, 01-debate §22·§128).
+ 
+ | Tier | 비용 | 수단(예) | 허용 조건 | 폴백 의무 |
+ |------|------|----------|-----------|-----------|
+ | **Tier 0** | **0 (항상 권장)** | 타이포 위계(크기·굵기·자간), 넉넉한 여백, **CSS Grid 비대칭 레이아웃**, 대비·색 1포인트, `text-wrap:balance/pretty` | 무조건 1차로 사용. personality의 90%를 여기서 만든다 | 불필요(이미 정적) |
+-| **Tier 1** | **저비용** | `transform`/`opacity` 마이크로 인터랙션(호버 살짝 떠오름·페이드인), 진입 1회 애니메이션 | 모션 예산 준수(1회·≤250ms), `prefers-reduced-motion: reduce` 폴백 필수 | **reduced-motion 시 0** (CSS로 자동 차단, §3.1 reset에 내장) |
++| **Tier 1** | **저비용** | `transform`/`opacity` 마이크로 인터랙션(호버 살짝 떠오름·페이드인), 스크롤 등장·카운트업·은은한 루프 등 장식 애니메이션 | 장식 모션은 길이·반복 자유(무한 루프 허용), 기능 UI는 기본 120/200ms, `prefers-reduced-motion: reduce` 폴백 **필수** | **reduced-motion 시 0** (CSS로 자동 차단, §3.1 reset에 내장) |
+ | **Tier 2** | **고비용** | 배경 비디오, 그레인(noise) 텍스처, 패럴랙스 스크롤, `backdrop-filter` 글래스 | 성능 예산(LCP/CLS/INP) **실측 통과** + 폴백 존재 + art brief가 명시 요구 시에만 | 미지원/저사양 폴백 필수(아래 §7.1·§7.2) |
+ 
+ **판단 규칙**: Tier 0로 충분하면 Tier 1·2를 추가하지 않는다. "대담함=무거움"은 게으른 변명(01-debate §93). 비대칭=CSS Grid(비용 0), 그레인=SVG/소형 타일(아래)로 구현 기법으로 예산을 맞추고, 장식부터 버리지 않되 **예산을 깨면 장식을 버린다**.
+ 
+ ### 7.1 그레인(noise) = SVG 또는 소형 타일 (Tier 2를 저비용으로)
+ 
+ 무거운 PNG noise 대신 인라인 SVG 필터 또는 작은 반복 타일로 구현 → 런타임 0KB에 가깝다.
+ 
+ ```css
+ /* SVG feTurbulence를 data URI로 — 외부 파일 0, 용량 ~1KB */
+diff --git a/references/color-token-contract.md b/references/color-token-contract.md
+index 28f56cd..1306352 100644
+--- a/references/color-token-contract.md
++++ b/references/color-token-contract.md
+@@ -52,29 +52,31 @@ HSL의 `L`은 **수학적 밝기**일 뿐 사람이 느끼는 밝기가 아니
+ ### 1.3 앵커 결정 절차 (art brief → 앵커)
+ 
+ art brief(`art-brief-template.md`)의 무드 키워드 3개에서 앵커를 정한다.
+ 
+ 1. **브랜드 색이 주어졌나?**
+    - 있으면: 그 hex를 OKLCH로 환산(아래 §1.4 변환표/근사식) → 그대로 brand 앵커.
+    - 없으면: 무드 → 색상(H) 매핑으로 H를 먼저 잡고, 도메인 기본 C를 적용.
+ 
+ 2. **무드 → 색상(H)·채도(C) 기본 매핑** (도메인 분기 02-skill-spec §4 반영)
+ 
+-| 무드/도메인 | 권장 H | 권장 C(앵커) | 근거(효과) |
+-|-------------|--------|--------------|------------|
+-| C레벨·신뢰·절제(luxury) | 230~250(네이비), 270(인디고) | **낮게 0.04~0.08** | 채도가 낮을수록 "차분·신뢰" 인상. (02 §4.3 luxury 기본) |
+-| 분석보고서·중립(editorial) | 220~250 또는 무채색 가까이 | 0.05~0.10 | 데이터가 주인공, 색은 거들기 |
+-| 웹앱(soft-modern/technical) | 210~260(블루·틸), 280(바이올렛) | 0.10~0.16 | 상호작용을 안내하는 또렷한 accent |
+-| PPT(editorial-bold) | 자유(무드 채도 상향 허용) | 0.14~0.20 | 빔 저대비 보정 위해 또렷하게 |
+-| 마케팅/설득(기타) | 자유 | 가독성 하한선 위에서 상향 | 임팩트 우선 (02 §4.5) |
++> **채도 캡 완화(화려함 허용)**: 아래 C값은 **권장 출발점**일 뿐 도메인별 상한이 아니다. **모든 도메인**(C레벨·보고서·덱 포함)에서 고채도(장식면 C 최대 ~0.30)를 허용한다. 대비 게이트가 텍스트색을 자연히 제약하므로(§3), 채도 캡은 따로 두지 않는다.
+ 
+-3. **앵커 수**: 보통 brand 1개. 필요 시 brand + accent(보색~삼각 배색) 최대 2개. accent 남발 금지 — 화면당 accent 사용은 60-30-10(§5)에서 10% 이내.
++| 무드/도메인 | 권장 H | 권장 C(앵커, 출발점) | 허용 범위 | 근거(효과) |
++|-------------|--------|----------------------|-----------|------------|
++| C레벨·신뢰(luxury) | 230~250(네이비), 270(인디고) | 0.04~0.08(절제형) | **~0.30까지 자유** | 절제도 대담도 가능 — 글씨 대비만 유지 |
++| 분석보고서(editorial) | 220~250 또는 자유 | 0.05~0.10(중립형) | **~0.30까지 자유** | 데이터 정직성·대비는 유지, 색은 자유 |
++| 웹앱(soft-modern/technical) | 210~280 또는 자유 | 0.10~0.16 | **~0.30까지 자유** | 또렷한·대담한 accent 모두 허용 |
++| PPT(editorial-bold) | 자유 | 0.14~0.20 | **~0.30까지 자유** | 빔 가독 + 임팩트 |
++| 마케팅/설득(기타) | 자유 | 상향 | **~0.30까지 자유** | 임팩트 우선 (02 §4.5) |
++
++3. **앵커 수**: 보통 brand 1개. 필요 시 brand + accent + 다색 팔레트도 허용(개수 캡 없음). 60-30-10(§5)·accent 개수는 **비차단 제안**이지 강제 캡이 아니다.
+ 
+ ### 1.4 hex ↔ OKLCH 변환 (런타임 근사 — 정밀 변환기가 없을 때)
+ 
+ 런타임 에이전트는 정밀 컬러 라이브러리 없이도 동작해야 하므로, **앵커를 sRGB hex로부터 받을 때는 아래 절차로 근사 환산**한다. (출력 폴백 hex는 §4에서 별도로 다룸.)
+ 
+ 근사 절차(코드로 계산 가능):
+ 1. hex → 0~1 정규화 sRGB → 역감마(linearize): `c_lin = c <= 0.04045 ? c/12.92 : ((c+0.055)/1.055)^2.4`
+ 2. linear sRGB → OKLab (행렬, 아래 JS 스니펫)
+ 3. OKLab → OKLCH: `L=L`, `C=sqrt(a²+b²)`, `H=atan2(b,a)·180/π`(음수면 +360)
+ 
+@@ -315,36 +317,38 @@ function oklchToHex(L, C, H) {
+   const enc = c => { c = c<=0.0031308 ? 12.92*c : 1.055*Math.pow(c,1/2.4)-0.055; return Math.max(0,Math.min(1,c)); };
+   const to2 = c => Math.round(enc(c)*255).toString(16).padStart(2,'0');
+   return '#'+to2(r)+to2(g)+to2(bb);
+ }
+ ```
+ 
+ > 게멋(표현 가능 범위) 주의: OKLCH로 만든 색이 sRGB 밖이면 위 함수가 클립(잘림)한다. 클립으로 색이 눈에 띄게 틀어지면 **C를 살짝 낮춰** 다시 환산한다(L·H 유지, C 우선 양보 = 밝기·색상은 지키고 선명함만 양보). 이는 게멋 매핑의 보수적 기본 규칙이다.
+ 
+ ---
+ 
+-## 5. 60-30-10 적용 맵 (색 비율 규율)
++## 5. 60-30-10 적용 맵 (선택적 균형 가이드 — BLOCK 아님)
++
++> **완화됨(화려함 허용)**: 60-30-10·accent 개수/면적 캡은 **더 이상 BLOCK이 아니다**. 다색·대담 팔레트를 허용한다(`anti-slop-checklist.md` A7 완화와 일치). 아래는 시선 우선순위가 흐릴 때 참고할 **선택적 균형 가이드**다.
+ 
+-화면에서 색은 **지배 60% · 보조 30% · 강조 10%** 비율로 쓴다. accent를 3개 이상 남발하면 anti-slop(`anti-slop-checklist.md`)에서 BLOCK된다.
++화면에서 색은 흔히 **지배 60% · 보조 30% · 강조 10%** 비율로 쓰면 안정적이지만, 의도적으로 다색·대담하게 써도 무방하다(차단하지 않는다).
+ 
+ | 비율 | 역할 | 어느 토큰 | 일상어 |
+ |------|------|-----------|--------|
+ | **60%** 지배 | 배경·여백·큰 면 | `--color-bg`, 옅은 중성(brand 50~100 또는 neutral) | "바탕" |
+ | **30%** 보조 | 카드·구획·텍스트·테두리 | neutral 램프 + `--color-text` | "내용 담는 그릇" |
+ | **10%** 강조 | 버튼·링크·핵심 수치·CTA | `--color-brand-500/600`, accent 1개 | "눈길 끄는 한 점" |
+ 
+-도메인별 적용(02-skill-spec §4):
+-- **C레벨/보고서**: 보수적 중성 60-30 + 절제된 1 accent(10% 이내). 화면당 accent 1~2개.
+-- **웹앱**: 지배 중성, brand는 상호작용(버튼·링크·포커스)에만 = 자연히 10%.
+-- **PPT**: expression zone(표지·간지)는 무드 채도 자유, data zone은 10% 규율 유지.
++도메인별 참고(선택적, 02-skill-spec §4):
++- **C레벨/보고서**: 절제된 1 accent도, 대담한 다색도 가능(취향). 캡 없음.
++- **웹앱**: 지배 중성 + brand 상호작용색이 흔한 패턴이나, 대담한 다색도 자유.
++- **PPT**: expression zone·data zone 모두 대담한 색 허용(대비·CVD만 유지).
+ 
+-검사 규칙(무결성 게이트): 한 화면에서 **의미 있는 accent 색이 2개를 초과**하거나, **강조색이 화면 면적의 ~20%를 넘으면** 60-30-10 위반 → 경고/BLOCK 후 재배치.
++검사 규칙(무결성 게이트): accent 개수·면적은 **BLOCK 검사 대상이 아니다**(다색 허용). 게이트가 검사하는 것은 텍스트·UI·의미색의 **대비(§3 APCA AND WCAG)**와 CVD 이중 인코딩(§7)뿐이다.
+ 
+ ---
+ 
+ ## 6. reference 네이밍 규약 — 참조되는 5~7단계만, 고아 토큰 금지
+ 
+ > 이 §은 **색의 단계 명명 관례**만 다룬다. 토큰 *계층*(reference→semantic→component)의 구조·승격 규칙은 `token-system.md`(design-system-architect 관할)가 결정한다. 본 §은 그 reference 계층에 들어갈 *색 항목*의 명명·개수 규율이다.
+ 
+ ### 6.1 네이밍 형식
+ 
+ ```
+@@ -459,37 +463,37 @@ color.viz.grid / .axis / .annotation  (격자·축·주석 — UI 게이트 Lc
+ ---
+ 
+ ## 10. color-scientist 렌즈 — 산출 직전 자가 점검 (무결성 게이트 입력)
+ 
+ 다음을 모두 ✓해야 색 파트가 무결성 게이트(02-skill-spec §7)를 통과한다. 하나라도 ✗면 BLOCK·재산출.
+ 
+ - [ ] 모든 단계 색이 OKLCH 앵커에서 §2 규칙으로 파생됐다(손으로 찍은 hex·HSL lightness 단계 0개).
+ - [ ] 라이트/다크 램프가 **각각 독립 파생**됐다(L 반전 재사용 아님).
+ - [ ] 본문 모든 텍스트×배경 쌍이 **APCA Lc≥75 AND WCAG≥4.5:1**, 보조 Lc≥60, 대형/UI Lc≥45 AND 3:1, 비활성 Lc≥30.
+ - [ ] 모든 oklch 토큰에 **짝이 맞는 hex 폴백**이 있고 같은 색을 가리킨다(@supports 패턴, §4).
+-- [ ] 화면 색 비율이 **60-30-10**, 의미 accent ≤2개(§5).
++- [ ] (선택) 60-30-10·accent 개수는 **비차단 제안**이라 캡 검사 없음(§5) — 다색·대담 팔레트 허용. 의미색은 §7 CVD 이중 인코딩만 유지.
+ - [ ] CVD **3종 시뮬레이션** 통과 + 의미 구분은 **직접라벨+명도분리(1순위) 이중 인코딩**(§7).
+ - [ ] reference 색 단계가 **참조되는 5~7단계만**, 고아 토큰 0개(§6).
+ - [ ] 문화적 색 의미(상승/하락 등)는 **사용자 동의로 확정**됐다(§8).
+ - [ ] 색공간/네이밍 권한이 §9 계약대로 분리됐고 tokens.css에 중복 정의 0건.
+ 
+ ---
+ 
+ ## 부록 A — 자주 쓰는 검증 명령(요약 표)
+ 
+ | 검사 | 함수/방법(이 파일) | 통과 조건 |
+ |------|--------------------|-----------|
+ | 본문 대비 | `apcaLc(t,bg)` & `wcagRatio(t,bg)` | `≥75 && ≥4.5` |
+ | UI/대형 대비 | 동상 | `≥45 && ≥3` |
+ | hex 폴백 짝 | tokens.css에서 oklch 토큰마다 hex 기본값 존재 | 누락 0 |
+ | CVD 구분 | §7.3 feColorMatrix 토글 3종 | 모든 의미색·차트색 구분 가능 |
+-| 60-30-10 | accent 색 수·면적 | accent ≤2, 강조 면적 ~10% |
++| 60-30-10(선택) | accent 색 수·면적 | 캡 없음(비차단 제안 — 다색·대담 허용) |
+ | 고아 토큰 | 정의 vs 참조 대조 | 미참조 단계 0 |
+ 
+ ## 부록 B — 비개발자에게 보이는 표면(절대 노출 금지 용어 → 대체 카피)
+ 
+ | 백스테이지 용어 | 사용자에게는 이렇게 |
+ |-----------------|---------------------|
+ | OKLCH / L·C·H | "기준색", "조금 더 밝은/진한 단계" |
+ | APCA Lc / WCAG 비 | 신호등 🟢"잘 읽힘" 🟡"큰 글씨만 OK" 🔴"자동 보정함" |
+ | 램프/파생 | "한 색에서 자연스럽게 이어지는 단계들" |
+ | CVD/이중인코딩 | "색맹 동료도 구분되게(색 말고 모양·글자로도)" |
+diff --git a/references/token-system.md b/references/token-system.md
+index d19f285..0b849e5 100644
+--- a/references/token-system.md
++++ b/references/token-system.md
+@@ -126,38 +126,38 @@ semantic은 **"이 값이 어디에 쓰이는가(역할)"** 에 이름을 붙이
+ 접근성(누구나 쓸 수 있게)은 **취향이 아니라 품질 하한선**이다. 따라서 아래 4종은 **semantic 계층의 1급 시민으로 승격**되어, component를 생략하는 경량 모드에서도 **반드시 존재**해야 한다. 하나라도 빠지면 **토큰 lint BLOCK**(§8 규칙 R5).
+ 
+ > **상수 단일 소스**: 아래 7키의 확정 기본값(`--motion-duration-base: 200ms` 등)은 `references/_contract.md` §1·§2·§5가 SSOT다. 이 표는 그 값을 비춘다 — 값이 어긋나면 `tools/kb-consistency-check.sh`가 잡는다.
+ 
+ | # | 토큰 | 의미(비개발자 한 줄) | 권장 기본값 |
+ |---|------|---------------------|-------------|
+ | 1 | `--focus-ring-color` | 키보드 Tab으로 짚은 곳을 감싸는 **테두리 색** | `var(--color-brand-500)` (배경과 대비 3:1 이상) |
+ | 2 | `--focus-ring-width` | 그 테두리 **굵기** | `2px` |
+ | 3 | `--focus-ring-offset` | 테두리와 요소 사이 **간격** | `2px` |
+ | 4 | `--motion-duration-fast` | 짧은 애니메이션 **길이** | `120ms` |
+-| 5 | `--motion-duration-base` | 보통 애니메이션 **길이** | `200ms` (모션 예산 ≤250ms 준수) |
++| 5 | `--motion-duration-base` | 보통 애니메이션 **길이** | `200ms` (기능 UI 피드백 기본값 -- 상한 아님; 장식 모션은 길이·반복 자유) |
+ | 6 | `--motion-reduce` | "움직임 줄이기" 켜졌을 때 **0으로 만드는 플래그** | `1` (기본) / reduced 시 `0` |
+ | 7 | `--target-size-min` | 손가락으로 누를 **최소 터치 크기** | `24px` (권장 44px) |
+ 
+ ### 4.1 왜 토큰으로 올리나
+ - focus·motion·target을 **컴포넌트마다 따로 적으면** 어디선가 빠지거나 어긋나 접근성 구멍이 생긴다. semantic 토큰 1곳에 두면 **전 화면이 같은 기준**을 쓰고, lint가 "존재"를 강제할 수 있다.
+ - 이 4종의 **실제 적용/측정**(focus-visible 표시, reduced-motion 미디어쿼리, 터치 크기 실측)은 `a11y-checklist.md` 소관. 이 파일은 **토큰 정의의 존재**만 BLOCK으로 강제한다.
+ 
+ ### 4.2 표준 CSS 골격 (tokens.css에 그대로 포함)
+ 
+ ```css
+ :root {
+   /* a11y 1급 — 경량 모드에서도 필수 */
+   --focus-ring-color: var(--color-brand-500);
+   --focus-ring-width: 2px;
+   --focus-ring-offset: 2px;
+   --motion-duration-fast: 120ms;
+-  --motion-duration-base: 200ms;   /* 모션 예산 ≤250ms */
++  --motion-duration-base: 200ms;   /* 기능 UI 피드백 기본값(상한 아님). 장식 모션은 길이·반복 자유 */
+   --motion-reduce: 1;              /* 1=모션 허용, 0=정지 */
+   --target-size-min: 24px;        /* 권장 44px */
+ }
+ 
+ /* 사용자가 OS에서 "움직임 줄이기"를 켜면 자동 0 */
+ @media (prefers-reduced-motion: reduce) {
+   :root { --motion-reduce: 0; }
+ }
+ 
+ /* 적용 예 — 키보드 포커스 표시(전 요소 공통) */
+diff --git a/references/tokens.contract.json b/references/tokens.contract.json
+index 67d6d40..dd66cd5 100644
+--- a/references/tokens.contract.json
++++ b/references/tokens.contract.json
+@@ -1,18 +1,19 @@
+ {
+   "$comment": "머신 판독용 미러. 사람용 SSOT는 references/_contract.md. 둘은 동기화되어야 하며 tools/kb-consistency-check.sh가 단일값을 단언한다. dev-only · 사용자 산출물 폴더 미포함.",
+   "version": "1.0.0",
+   "motion": {
+     "--motion-duration-fast": "120ms",
+     "--motion-duration-base": "200ms",
+-    "--motion-budget-max": "250ms",
+-    "--motion-reduce-default": "1"
++    "--motion-reduce-default": "1",
++    "decorativeMotion": { "maxDuration": null, "loopAllowed": true },
++    "$note": "fast/base are DEFAULTS for functional UI feedback only, not a ceiling. Decorative motion (scroll-reveal, count-up, parallax, ambient loops) may be any duration and may loop. The only mandatory motion rule is the prefers-reduced-motion fallback: --motion-reduce -> 0."
+   },
+   "focus": {
+     "--focus-ring-color": "var(--color-brand-500)",
+     "--focus-ring-width": "2px",
+     "--focus-ring-offset": "2px",
+     "--target-size-min": "24px"
+   },
+   "contrast": {
+     "body":      { "apcaLc": 75, "wcag": 4.5 },
+     "secondary": { "apcaLc": 60, "wcag": 4.5 },
+diff --git a/skills/frontend-designer-pro/SKILL.md b/skills/frontend-designer-pro/SKILL.md
+index 7627d14..292c5c8 100644
+--- a/skills/frontend-designer-pro/SKILL.md
++++ b/skills/frontend-designer-pro/SKILL.md
+@@ -17,21 +17,21 @@ allowed-tools: Read, Write, Edit, Grep, Glob, AskUserQuestion, Task, WebSearch,
+ > **자기완결**: 외부 스킬(frontend-design / frontend-designer / color-expert) 미설치에도 동작한다. 필요한 지식은 전부 `${CLAUDE_PLUGIN_ROOT}/references/*.md`(10종)에 번들돼 있으며, 산출물은 빌드 없이 더블클릭으로 열린다.
+ 
+ ---
+ 
+ ## 0. 실행 규칙 (Execution Rules — 항상 먼저 읽는다)
+ 
+ 런타임 에이전트(메인 세션 또는 위임받은 `design-lead-pro`)는 아래 규칙을 **무조건** 지킨다.
+ 
+ 1. **질문 먼저는 무조건** — 아무리 간단한 요청도 §2 질문 게이트를 건너뛰지 않는다. 단 **'무조건 질문'을 '무조건 답 강요'로 해석하지 않는다**: 모든 문항에 **★추천 디폴트가 미리 선택**돼 있어, 사용자가 넘겨도 전문가 기본값으로 안전하게 흐른다. ("나중에 바꿀 수 있어요" 명시.)
+ 2. **깊이는 백스테이지, 표면은 그림** — OKLCH·APCA·토큰·reference/semantic 같은 용어는 **질문·시안 설명·신호등·보고 본문에 절대 단독 노출 금지**(`${CLAUDE_PLUGIN_ROOT}/references/non-dev-copy.md` §1-C). 사용자에겐 썸네일·느낌 단어·신호등·효과 1문장만.
+-3. **secure-by-default(품질 하한선은 안 묻는다)** — 대비·키보드·반응형·reduced-motion·60-30-10·CVD안전·다크모드 파생은 **묻지 않고 항상 켠다**. 끄려면 사용자의 명시적 거부가 필요하다.
++3. **secure-by-default(품질 하한선은 안 묻는다)** — 대비·키보드·반응형·reduced-motion·CVD안전·다크모드 파생은 **묻지 않고 항상 켠다**. 끄려면 사용자의 명시적 거부가 필요하다. (60-30-10·accent 개수는 더 이상 강제 하한선이 아니라 **비차단 제안** — 다색·대담 팔레트 허용.)
+ 4. **데이터 정직성 예외만 명시 동의 필수** — 축 0 시작 안 함(잘림 허용), 문화적 색 의미(빨강=상승/하락 등)는 신뢰성에 직접 영향을 주므로 **건너뛸 수 없는 유일한 질문**이다.
+ 5. **자동 수정 우선** — 대비 미달·alt 누락 등은 사용자에게 숙제로 떠넘기지 않고 "이렇게 고치면 통과합니다"로 **자동 보정**한 뒤 신호등으로 보고한다.
+ 6. **무빌드 더블클릭 보장** — 사용자는 터미널·node·서버를 모른다고 가정한다. 산출물은 `index.html` 더블클릭으로 열린다.
+ 7. **의도성 증거를 다리로** — 모든 미적 선택(폰트·색·레이아웃·모션)에 "왜 이걸 골랐나" 효과 1문장 근거를 남긴다. 근거 없는 미적 선택은 그 자체가 AI slop.
+ 8. **mandatory_review 우회 금지** — 영구 산출(파일 생성)이 발생하면 §7 단일 무결성 게이트는 **skip 불가**. 사용자가 "리뷰 스킵"을 요청해도 BLOCK 항목이 있으면 출고하지 않는다.
+ 9. **checklist-first(progressive disclosure)** — `${CLAUDE_PLUGIN_ROOT}/references/_block-card.md`(하드 게이트 1페이지)는 **항상 참조**한다. 무엇이 BLOCK인지는 카드로 항상 알고, **어떻게 고치는지·왜 그런지**가 필요한 순간에만 깊은 references(10종)를 Read한다(카드 하단 진입 맵). 상수·임계·토큰명의 확정값은 항상 `${CLAUDE_PLUGIN_ROOT}/references/_contract.md`가 진실.
+ 10. **경량/본격 모드 자동 분류** — 작업은 객관 신호로 **경량(빠른 모드) / 본격(꼼꼼 모드)을 자동 분류**한다. 분류 규칙: **본격 ⇐ 실데이터 OR 동적DOM OR 웹앱 8상태 OR 데이터정직성(축 잘림·문화적 색 의미) OR C레벨 도메인 OR 큰 표면(다중 섹션·다중 차트·발표 덱); 그 외(단일~소수 화면·정적·예시 데이터)는 경량**. **분류가 애매하면 본격으로 상향**한다(특히 차트가 있으면 '축 0 시작 AND 문화색 중립'을 적극 확신 못 하면 데이터정직성 신호로 보고 본격 — 판단형 신호의 자가 인지 실패에 따른 미탐 방지). 경량=의례(다회 질문·샘플 갤러리·art brief 별도 단계·멀티에이전트 왕복)를 **생략**하고 §7 게이트를 **1회 자가 측정으로 통과**(신호등 최대 🟡). 본격=`design-lead-pro`↔`design-redteam-pro` **독립 왕복**(🟢 가능). 모드는 자동 선택하되 **하드한 첫 질문이 아니라** §2 도메인 확인 질문 안에 ★추천 디폴트로 표면화해, 사용자가 본격으로 올려잡을 수 있게 둔다. **품질 게이트·secure-by-default·데이터정직성 동의(§0-4)는 두 모드 공통이며 생략 불가**(경량은 게이트를 자가 1패스로 *실행*하는 것이지 *skip*이 아니다).
+ 
+ ---
+ 
+@@ -45,21 +45,21 @@ allowed-tools: Read, Write, Edit, Grep, Glob, AskUserQuestion, Task, WebSearch,
+ - 코드 이해가 필요하면 `code-researcher` 류 조사 에이전트를 **단독 1회** 호출(이 1회는 단독 호출 허용, §5).
+ - **카피 노트**: "첨부 파일을 먼저 꼼꼼히 읽고 시작합니다 — 그림이 그려지면 질문 수를 줄여드립니다."
+ 
+ ### 단계 1 — 질문 게이트 (무조건·1회 묶음)
+ - `AskUserQuestion` **한 번에 핵심 5개**를 객관식 + ★추천 디폴트로 묶어 묻는다(§2). ①도메인 확인 ②미적 방향(썸네일 갤러리) ③실행환경 ④받는 사람·열람 환경 ⑤시각장애 동료 열람 여부. **여기에 ⑥샘플 비교 여부·⑦메모 저장은 ★디폴트(⑥예/⑦결과폴더)로 흡수**해 같은 묶음에 덧붙이되 넘겨도 안전하게 둔다 — 즉 **핵심 5 + 디폴트 흡수 2 = 최대 7문항**(§2.3 예시와 일치). 피로를 키우지 않으려 ⑥⑦은 굵게 묻지 않고 디폴트 선택 상태로 제시한다.
+ - **(경량 모드)** 7문항 묶음이 **도메인 1줄 확인 + 저장위치**로 collapse된다(모드 ★디폴트=빠른 모드는 ①도메인 확인에 얹어 함께 표면화). 나머지 ②~⑦은 ★추천 디폴트를 **조용히 채택**한다. **단 차트+데이터가 함께면 데이터 정직성(축 잘림·문화적 색 의미) 질문은 경량에서도 명시·생략 불가**(§0-4).
+ - 색·접근성·토큰은 **묻지 않고** 자동 파생한다(§0-3).
+ - **카피 노트**: "딱 한 번, 꼭 필요한 것만 그림과 객관식으로. '알아서 해주세요'를 골라도 전문가 기본값으로 최고 품질. 안 골라도 안전합니다."
+ 
+ ### 단계 2 — 의도 판단 & art brief(SSOT) 작성
+-- 도메인을 확정하고 미적 방향을 2~3개로 좁힌다. `${CLAUDE_PLUGIN_ROOT}/references/art-brief-template.md`를 채워 **Design Concept 1페이지**를 만든다: 무드 키워드 3개·연상 레퍼런스·하지 말 것 3개 + **대비 거부권 표면 지도**(텍스트/의미색=성역, 장식 면=무드 자유) + 모션 예산(진입 1회·≤250ms·reduced-motion 0) + expression zone vs data zone 경계.
++- 도메인을 확정하고 미적 방향을 2~3개로 좁힌다. `${CLAUDE_PLUGIN_ROOT}/references/art-brief-template.md`를 채워 **Design Concept 1페이지**를 만든다: 무드 키워드 3개·연상 레퍼런스·하지 말 것 3개 + **대비 거부권 표면 지도**(텍스트/의미색=성역, 장식 면=무드 자유) + 모션 예산(**장식 모션은 길이·루프 제한 없음**, 기능 UI 피드백은 120/200ms 기본값, **reduced-motion 폴백 필수**) + expression zone vs data zone 경계.
+ - 이 art brief가 color·token·a11y·dataviz의 **단일 상류 입력**이다.
+ - **(경량 모드)** art brief를 **별도 단계·별도 산출물로 만들지 않고 산출 안에 인라인으로 접는다**(방향 합의는 단계 1 ★디폴트 수용으로 이미 끝남). 무드·하지 말 것·zone 경계 판단은 그대로 적용하되 1페이지 문서화는 생략.
+ - **카피 노트**: "'어떤 느낌으로 갈지'를 한 장으로 정리합니다. 이 한 장이 색·글꼴·레이아웃 전부의 기준이라 톤이 들쭉날쭉해지지 않습니다."
+ 
+ ### 단계 3 — 샘플 N개 제안 여부 질문
+ - "서로 다른 성격의 시안 N개를 나란히 비교해 보시겠어요?"(기본 추천 3개). **제안은 항상 하되 강제하지 않는다.** 동의 시에만 단계 4로, 생략 시 art brief 추천안으로 본 작업 직행.
+ - **(경량 모드)** 샘플은 이미 opt-in이므로 경량에선 **기본 생략**(단계 4 건너뜀). 추천안으로 바로 단계 6 산출.
+ - **카피 노트**: "여러 분위기를 나란히 놓고 그림으로 고르실 수 있게 해드릴까요? 시간이 더 걸리지만 후회가 적습니다. 건너뛰어도 됩니다."
+ 
+ ### 단계 4 — (선택) 샘플 갤러리 생성
+@@ -108,90 +108,90 @@ allowed-tools: Read, Write, Edit, Grep, Glob, AskUserQuestion, Task, WebSearch,
+ - 전문용어는 **괄호 일상어 병기 필수**: '에디토리얼(잡지 레이아웃 느낌)', '럭셔리(여백 많고 절제된 고급 느낌)', '브루탈리즘(거칠고 강한 인쇄물 느낌)'. **APCA/OKLCH/토큰/reference/semantic은 질문 본문에 절대 단독 노출 금지.**
+ - 모든 선택지에 '왜 추천하는지'를 **결과·효과로 1문장**: "임원이 신뢰감을 느끼도록 여백과 차분한 색을 씁니다."
+ - 항상 **★추천 디폴트 하나 + '나중에 바꿀 수 있어요'** 명시.
+ - 선택은 '값 입력'이 아니라 '추천안 중 고르기'. 색 hex·토큰명·좌표를 묻지 않고 느낌 단어 + 스와치 썸네일.
+ - '모름/알아서'가 항상 안전한 길로 흐르게.
+ - 질문 본문은 기법이 아니라 결과로: "React가 좋을까요?"(X) → "클릭하면 바로 열리는 단일 파일이 편하세요, 아니면 개발팀이 이어받나요?"(O)
+ 
+ ### 2.3 그대로 쓰는 예시 질문 (카피 톤 레퍼런스)
+ > `${CLAUDE_PLUGIN_ROOT}/references/non-dev-copy.md` §8-C 7문항과 일치. ★ 위치·"모름→안전" 보기·효과 1문장은 **빼지 않는다**.
+ 
+-1. **[도메인 확인 + 모드]** "첨부 내용을 보니 임원 보고용 자료 같습니다. 맞을까요? (예 ★ / 아니요-웹앱 / 아니요-발표 슬라이드) — 임원 보고서는 화려함보다 신뢰감·가독·절제를 우선해 만듭니다." 같은 칸에 모드도 ★디폴트로 곁들인다: "만드는 방식은 (빠른 모드=바로 만들고 제가 직접 두 번 점검 / ★꼼꼼 모드=검토자를 따로 띄워 독립으로 두 번 점검) — 임원 보고서는 중요한 자료라 ★꼼꼼 모드를 추천합니다(한 화면짜리 간단한 작업이면 빠른 모드로 충분). 나중에 바꿀 수 있어요."
++1. **[도메인 확인 + 모드]** "첨부 내용을 보니 임원 보고용 자료 같습니다. 맞을까요? (예 ★ / 아니요-웹앱 / 아니요-발표 슬라이드) — 차분한 느낌도, 또렷하고 임팩트 있는 느낌도 모두 만들 수 있어요(글씨는 어디서나 잘 읽히게 유지합니다)." 같은 칸에 모드도 ★디폴트로 곁들인다: "만드는 방식은 (빠른 모드=바로 만들고 제가 직접 두 번 점검 / ★꼼꼼 모드=검토자를 따로 띄워 독립으로 두 번 점검) — 임원 보고서는 중요한 자료라 ★꼼꼼 모드를 추천합니다(한 화면짜리 간단한 작업이면 빠른 모드로 충분). 나중에 바꿀 수 있어요."
+ 2. **[미적 방향]** "아래 그림 중 마음에 드는 느낌을 골라주세요. (★에디토리얼=잡지 레이아웃 / 럭셔리=여백 많고 절제된 고급 / 미니멀=깔끔하고 군더더기 없는) — 임원이 신뢰감을 느끼도록 ★를 추천. 나중에 바꿀 수 있어요."
+ 3. **[실행환경]** "결과물을 어떻게 쓰실 건가요? (★클릭하면 바로 열리는 단일 파일 / 사내 공유드라이브·Confluence / 개발팀이 코드로 발전) — 대부분 ★ 추천. 터미널 없이 더블클릭."
+ 4. **[열람 환경]** "주로 어디서 보게 되나요? (임원 휴대폰 / 발표장 빔프로젝터 / 종이 인쇄 / 모름→다 대응) — 보는 곳에 맞춰 글씨 크기·대비를 맞춥니다."
+ 5. **[접근성 대상]** "이 자료를 시각장애가 있는 동료도 보게 되나요? (예 / 아니요 / 모름→안전하게 예) — 예로 두면 밝은 회의실 빔·저시력 동료에게도 또렷. 추가 비용 없음."
+ 6. **[샘플 여부]** "서로 다른 분위기 시안 3개를 나란히 비교해 보시겠어요? (★예 / 아니요-추천안 바로) — 시간이 조금 더 걸리지만 후회가 적습니다. 건너뛰어도 됩니다."
+ 7. **[기록 저장]** "Q&A와 방향을 결과 폴더에 메모(.md)로 남겨둘까요? (예-결과폴더 / 예-경로지정 / 아니요) — 나중에 왜 이렇게 만들었는지 되짚기 좋습니다."
+ 
+ ---
+ 
+ ## 3. 6 전문가 렌즈 — 인라인 체크리스트 (순차 자기적용)
+ 
+ > 6인 전문가는 **상시 에이전트로 부르지 않는다.** 단일 산출자(메인 세션 또는 `design-lead-pro`)가 산출 시점에 아래 6 렌즈를 **순차로 자기적용**한다(컨텍스트 절약, §5). 각 렌즈는 해당 references를 백스테이지에서만 Read한다(§6).
+ 
+ ### 렌즈 1 — 아트디렉터 (art-director)
+ - [ ] art brief 1페이지가 채워졌나(무드 3개·연상·하지 말 것 3개·이유 1문장)? `${CLAUDE_PLUGIN_ROOT}/references/art-brief-template.md`.
+ - [ ] 미적 방향이 도메인 ★기본에서 출발했나? `${CLAUDE_PLUGIN_ROOT}/references/aesthetic-directions.md` §9 매핑.
+ - [ ] **위계를 대비 깎기가 아니라 크기·굵기·여백으로** 만들었나(텍스트·의미색은 성역).
+ - [ ] expression zone(표지·간지·장식면)과 data zone(차트·표·본문) 경계가 명확한가.
+-- [ ] anti-slop 9항목(보라 그라데이션·기본폰트 방치·균등 3카드·이모지 아이콘·센터 hero·회색 박스·accent 남발·명사구 차트제목·통통 모션)을 사전 회피했나? `${CLAUDE_PLUGIN_ROOT}/references/anti-slop-checklist.md`.
++- [ ] anti-slop 품질 항목(기본폰트 방치 A2·균등 3카드 A3·이모지 아이콘 A4·센터 hero A5·회색 박스 A6·명사구 차트제목 A8)을 사전 회피했나? **A1 그라데이션·A7 accent 다색·A9 장식 모션(길이·루프)은 완화돼 자유 — 화려함 허용**(단 텍스트 대비 성역 + reduced-motion 폴백은 유지). `${CLAUDE_PLUGIN_ROOT}/references/anti-slop-checklist.md`.
+ 
+ ### 렌즈 2 — 디자인시스템 아키텍트 (design-system-architect)
+ - [ ] reference + semantic **2계층 모두 존재**(BLOCK). component는 필요할 때만.
+ - [ ] semantic·component는 **`var()`로만** 상위를 가리킴(날 hex/px 직접값 0건). 참조 방향 단방향, 순환 0건.
+ - [ ] **a11y 1급 4종 7키** 존재(`--focus-ring-{color,width,offset}` / `--motion-duration-{fast,base}` / `--motion-reduce` / `--target-size-min`). 경량 모드여도 필수.
+ - [ ] 차트 색은 `color.viz.*` 독립 네임스페이스, categorical 8색 이내, 본문 semantic 미참조.
+ - [ ] `tokens.css` = 런타임 SSOT(사용자 폴더 포함). `tokens.json`은 카탈로그용(미포함). 다크/고대비/인쇄는 reference 스왑 1회. `${CLAUDE_PLUGIN_ROOT}/references/token-system.md`.
+ 
+ ### 렌즈 3 — 색채과학자 (color-scientist)
+ - [ ] 모든 단계 색이 OKLCH 앵커에서 파생(손으로 찍은 hex·HSL lightness 단계 0개). 라이트/다크 램프 각각 독립 파생.
+ - [ ] 본문 텍스트×배경 쌍이 **APCA Lc≥75 AND WCAG 4.5:1**, 보조 Lc≥60, 대형/UI Lc≥45 AND 3:1, 비활성 Lc≥30.
+-- [ ] 모든 oklch 토큰에 짝 맞는 hex 폴백(@supports 패턴). 60-30-10, 의미 accent ≤2개.
++- [ ] 모든 oklch 토큰에 짝 맞는 hex 폴백(@supports 패턴). 60-30-10·accent 개수는 **비차단 제안**(다색·대담 팔레트 허용, 캡 없음).
+ - [ ] CVD 3종 시뮬레이션 통과 + **직접라벨+명도분리(1순위) 이중 인코딩**. 문화적 색 의미는 사용자 동의로 확정.
+ - [ ] `${CLAUDE_PLUGIN_ROOT}/references/color-token-contract.md`. (사용자에겐 신호등·"기준색"만 노출, L/C/H·Lc는 백스테이지.)
+ 
+ ### 렌즈 4 — 접근성/UX 리드 (a11y-ux-lead)
+ - [ ] BLOCK 7종 통과: 이중 대비 게이트 / landmark + h1→h6 단일 위계 / 완전 키보드 + `:focus-visible` 2px(대비 3:1) + skip link / 동적 DOM 교체에만 포커스 트랩·복귀·aria-live / 스크림 오버레이(풀블리드·글래스 위 텍스트) / 도메인 필수 대체본 / 장식 자유 경계(no-text AND no-meaning).
+ - [ ] 도메인별 추가: 웹앱=폼 라벨·aria-describedby·라이브영역 / 보고서=차트 `table+caption+th scope` / PPT=슬라이드 region·키보드 네비·발표자 노트.
+ - [ ] reduced-motion 폴백. 터치 타깃 ≥24px(권장 44px).
+ - [ ] `${CLAUDE_PLUGIN_ROOT}/references/a11y-checklist.md`. (사용자에겐 신호등 3색 + 실생활 1줄만.)
+ 
+ ### 렌즈 5 — 데이터시각화/보고서 전문가 (dataviz-report-specialist)
+ - [ ] 차트 선택이 의도(비교=막대 / 추이=선 / 상관=산점 / 부분-전체=누적막대·treemap, 파이≤5 / 분포=히스토그램·박스 / 밀도=heatmap)에 맞나. 의도 둘이면 차트를 나눈다(슬라이드당 1주장).
+ - [ ] 모든 차트에 **결론형 takeaway title**(명사구 금지). 데이터↔스케일 매핑(순차/발산/범주, 축 0시작 막대 vs 잘림허용 선 명문화). 같은 변수=같은 색.
+ - [ ] 인라인 SVG 차트(role=img + title + desc, 색 외 직접 라벨). 정적 4상태(empty·과다 상위N+'외M건'·결측NA·print분할). 출처·기준일·n=·가정 메타 푸터.
+ - [ ] 인터랙션은 2조건(정적 불가 밀도 + 정적 폴백 존재) 충족 시만 경량 라이브러리 조건부. `${CLAUDE_PLUGIN_ROOT}/references/chart-decision.md`.
+ 
+ ### 렌즈 6 — 프론트엔드 구현 엔지니어 (frontend-implementation-engineer)
+ - [ ] 무빌드 절대 규칙 통과: `index.html` 더블클릭 동작, importmap ESM(번들러 금지), 순수 CSS 변수, 로컬 woff2 또는 system-ui 폴백, 인라인 SVG. `file://` 함정 회피(데이터 인라인·iframe 정적 링크 폴백).
+-- [ ] 비용 계층: Tier0(타이포·여백·CSS grid 비대칭·대비, 비용0) 우선 / Tier1(transform·opacity 마이크로 인터랙션, reduced-motion 폴백) / Tier2(비디오·그레인·패럴랙스)는 성능 예산 통과 + 폴백 시만.
+-- [ ] 성능 예산 LCP<2.5s / CLS<0.1 / INP<200ms. progressive enhancement. 한국어 폰트 스택(Pretendard 서브셋 또는 폴백, `word-break:keep-all`, `line-height ≥1.6`).
++- [ ] 비용 계층(완화됨 — 화려함 기본 허용): Tier0(타이포·여백·CSS grid 비대칭·대비) / Tier1(transform·opacity 마이크로 인터랙션) / **Tier2(글래스모피즘·3D 틸트·마그네틱 버튼·카운트업·패럴랙스·스크롤리빌·비디오·그레인)는 기본 허용** — 성능 예산·art brief 정당화 게이트 뒤에 가두지 않는다. **일반 frontend-designer처럼 화려한 기법(스크롤리빌 애니메이션·글래스모피즘·틸트·마그네틱 버튼·카운트업·대담한 그라데이션/색)을 권장**한다. **단 reduced-motion 폴백은 모든 Tier에서 필수(BLOCK)**.
++- [ ] 성능 예산 LCP<2.5s / CLS<0.1 / INP<200ms는 **권고(advisory)** — BLOCK이 아니다(콘솔 에러·404 같은 실제 깨짐만 BLOCK). progressive enhancement. 한국어 폰트 스택(Pretendard 서브셋 또는 폴백, `word-break:keep-all`, `line-height ≥1.6`).
+ - [ ] 결과 폴더 구조 사람이 알아볼 이름, `dist/`·`.next/` 금지. `${CLAUDE_PLUGIN_ROOT}/references/build-boilerplate.md`.
+ 
+ ---
+ 
+ ## 4. 도메인 분기표 (6 도메인)
+ 
+ > 공통: art brief 종속, §7 무결성 게이트 **모든 도메인 적용**(대비·토큰·a11y·anti-slop), 한국어 `keep-all`·`line-height ≥1.6` 하한선. "기타"는 도메인 확정 전 코드 한 줄도 쓰지 않는다(Intent Gate).
+ > **무빌드 더블클릭 하한선의 적용 범위**: 4.1~4.5(정적/SPA·보고서·C레벨·PPT·기타)는 `index.html` `file://` 더블클릭이 하한선이다. **4.6 Python 웹앱은 예외** — Streamlit/Gradio/Dash/FastAPI는 파이썬 서버가 런타임에 자체 DOM을 생성하므로 단일 HTML 핸드오프가 불가능하다. 4.6의 산출 모델은 "**더블클릭 HTML**"이 아니라 "**프레임워크 테마/CSS를 1회 주입해 기존 앱의 룩을 바꾸는 패치**"다(§4.6 주·§9-1 예외).
+ 
+ | 도메인 | 탐지 신호 | 추천 스택 | 주도 렌즈 | 핵심 품질 기준 |
+ |--------|-----------|-----------|-----------|----------------|
+ | **4.1 웹앱(프론트엔드, JS/정적)** | 로그인/대시보드/폼/CRUD/실시간, 상태 변화·입력·라우팅, **HTML/JS·React/Vue/Svelte** 언급, '화면·페이지·앱·서비스'. ⚠️ **Streamlit/Gradio/Dash/FastAPI 등 파이썬 서버 프레임워크는 4.1이 아니라 4.6으로 라우팅**(단일 HTML 핸드오프 불가) | 정적·상태 적음=Vanilla+inline JS. 복잡 상태·실시간=React/Vue/Svelte **importmap 무빌드 경로 우선**. 토큰=순수 CSS 변수. **React 기본값 고정 금지**(의도·복잡도 판단 후 컨펌) | 구현엔지니어 · 디자인시스템 · a11y/UX · 아트디렉터 | 인터랙티브 **8상태 전수**(default/hover/active/focus/disabled/loading/error/empty) / 완전 키보드+2px focus-visible(대비3:1)+skip link / LCP<2.5s·CLS<0.1·INP<200ms / 320px 모바일퍼스트·터치≥24px·텍스트200% reflow / 동적 DOM 교체에만 포커스트랩+복귀+aria-live / axe 위반 BLOCK 0건 |
+-| **4.2 공유용 분석 보고서** | 데이터·지표·분석·추이, 여러 사람이 읽는 문서·차트/표 다수, '리포트·분석·현황', 출처·기간·표본 메타 | Vanilla HTML + 인라인 SVG 차트(런타임 0KB). @media print A4. 인터랙션은 2조건 충족 시만 경량 라이브러리(uPlot~40KB) 조건부. SCQA/Pyramid 골격 | 데이터시각화 · 아트디렉터 · a11y/UX · 색채과학 | 모든 차트 **결론형 takeaway title** / 정보 위계 3단(핵심1→근거3~5→부록)·섹션당 1결론 / 차트 색=의미 스케일(CVD안전 8색 이내)+직접라벨+명도분리 / 모든 차트 `table+caption+th scope` 대체본(협상 불가) / 정적 4상태 / 출처·기준일·n=·가정 메타 푸터 / data zone 절제 |
+-| **4.3 C레벨·이그제큐티브 보고서** | 임원·경영진·의사결정·승인·투자, '보고·C레벨·이사회·1페이지 요약', 격식·신뢰감·간결, 결론 먼저(BLUF) | Vanilla HTML + 인라인 SVG. **luxury/restrained 기본**. @media print + PDF 안전(흑백 인쇄 대비 토큰). 보수적 중성 + 절제된 1 accent. 임원 폰 열람 전제 모바일 퍼스트 | 아트디렉터 · 데이터시각화 · 색채과학 · a11y/UX | **신뢰·가독·절제 > 화려함**을 art brief에 못박음 / BLUF 골격·1페이지 요약 / 보수적 중성+accent 화면당 1~2(60-30-10) / 인쇄·PDF 흑백 대비 안전 / 출처·기준일·n=·가정 메타 / 임원 휴대폰 320px 무손실 / 본문 APCA Lc≥75 AND WCAG 4.5:1 |
++| **4.2 공유용 분석 보고서** | 데이터·지표·분석·추이, 여러 사람이 읽는 문서·차트/표 다수, '리포트·분석·현황', 출처·기간·표본 메타 | Vanilla HTML + 인라인 SVG 차트(런타임 0KB). @media print A4. 인터랙션은 2조건 충족 시만 경량 라이브러리(uPlot~40KB) 조건부. SCQA/Pyramid 골격 | 데이터시각화 · 아트디렉터 · a11y/UX · 색채과학 | 모든 차트 **결론형 takeaway title** / 정보 위계 3단(핵심1→근거3~5→부록)·섹션당 1결론 / 차트 색=의미 스케일(CVD안전 8색 이내)+직접라벨+명도분리 / 모든 차트 `table+caption+th scope` 대체본(협상 불가) / 정적 4상태 / 출처·기준일·n=·가정 메타 푸터 / **대담한 색·그라데이션 허용(절제 강제 아님)** — 단 데이터 정직성(축·스케일)·CVD·대비는 유지 |
++| **4.3 C레벨·이그제큐티브 보고서** | 임원·경영진·의사결정·승인·투자, '보고·C레벨·이사회·1페이지 요약', 격식·신뢰감·간결, 결론 먼저(BLUF) | Vanilla HTML + 인라인 SVG. luxury/editorial/bold 등 **모든 방향 허용(대담함 1급 옵션)**. @media print + PDF 안전(흑백 인쇄 대비 토큰). 임원 폰 열람 전제 모바일 퍼스트 | 아트디렉터 · 데이터시각화 · 색채과학 · a11y/UX | **대담한 색·그라데이션·고채도·다색 accent 허용**(절제는 강제 아닌 선택) / BLUF 골격·1페이지 요약 / 인쇄·PDF 흑백 대비 안전 / 출처·기준일·n=·가정 메타 / 임원 휴대폰 320px 무손실 / **본문 APCA Lc≥75 AND WCAG 4.5:1(성역 유지)** |
+ | **4.4 발표 PPT 덱(HTML)** | 발표·프레젠테이션·슬라이드·덱, 'PPT·슬라이드·발표자료·키노트', 16:9·빔·발표자노트, 슬라이드당 1주장 | Vanilla HTML 16:9 슬라이드(각 슬라이드=`section[aria-label]`) + 키보드 화살표 네비 + @media print 페이지분할 + 발표자 모드. **editorial-bold 기본**. 빔 저대비 대응 대비 상향 | 아트디렉터 · 데이터시각화 · 구현엔지니어 · a11y/UX | 슬라이드당 1주장+결론형 제목 / `section[aria-label]`·figure/figcaption·키보드 화살표 / 빔 저대비 보정 대비 상향 / 스킵링크+슬라이드 키보드 핸들러+발표자노트 시각·스크린리더 동시 / 16:9+@media print 분할 / expression zone(표지·간지) 자유, data zone 절제 |
+ | **4.5 기타** | 위 4개에 명확히 안 맞음, 랜딩·마케팅·이메일·문서 혼합, 도메인 모름/새 유형, 복수 도메인 혼재 | 도메인 자동 추정 후 "이거 맞죠?" 확인 질문으로 분기. **확정 전 코드 한 줄도 안 씀**. 추정 실패 시 가장 가까운 도메인 스택을 ★추천+컨펌. 마케팅 랜딩/설득이면 가독성 하한선 위에서 미적 임팩트 상향 허용 | 아트디렉터 · 구현엔지니어 · 디자인시스템 · a11y/UX | 도메인 확정 질문 통과 전 산출 금지(Intent Gate) / 확정 도메인 품질기준 상속 / 마케팅·설득은 가독성 하한선 위에서만 임팩트 상향 / anti-slop+무결성 게이트 공통 |
+ | **4.6 Python 웹앱(Streamlit/Gradio/Dash/FastAPI)** | `streamlit`·`gradio`·`dash`·`fastapi`·`flask`·`django` 임포트/코드, `.py`·`app.py`·`requirements.txt`·`.streamlit/` 존재, "파이썬 앱·대시보드·데모·내부 툴", **기존 파이썬 앱 UI 개선** 요청 | 프레임워크별 테마 주입(`${CLAUDE_PLUGIN_ROOT}/references/python-ui-theming.md`): Streamlit=`.streamlit/config.toml [theme]` + `st.markdown(<style>, unsafe_allow_html=True)` **단일 CSS 1회 주입** / Gradio=`gr.themes.Base(...)` + `css=` / Dash=`assets/custom.css` + dash-bootstrap-components / FastAPI=Jinja 템플릿 + `<link tokens.css>`. **토큰=CSS 변수로 만들어 프레임워크 테마 슬롯에 매핑** | 디자인시스템 · 색채과학 · a11y/UX · 구현엔지니어 | 토큰→프레임워크 테마 **1회 주입**(흩뿌린 인라인 스타일 금지) / 기존 앱은 **읽고→테마·CSS만 패치, 파이썬 로직 불변**(§9-10 원본 보존) / 대비·CVD·키보드·reduced-motion 게이트 **동일 적용**(위젯 기본 대비까지 점검) / 프레임워크 위젯 상태(로딩 `st.spinner`·`gr.Progress` / 에러 `st.error`·`gr.Error` / 빈·결측) 디자인 매핑 / **무빌드 더블클릭 면제**(서버 실행 전제) / 산출물=테마 파일 + 편집가이드(`index.html` 아님) |
+ 
+-> **도메인 ↔ 미적 방향 기본 매핑**(`${CLAUDE_PLUGIN_ROOT}/references/aesthetic-directions.md` §9): 웹앱→★soft-modern(인접 technical·minimal) / 분석보고서→★editorial(soft-modern·technical) / C레벨→★luxury(editorial·minimal) / PPT→★editorial-bold(luxury·brutalist) / Python 웹앱→★soft-modern(인접 technical) / 기타→확정 질문 먼저. 사용자가 격식 도메인에서 대담한 방향을 골라도 §7 게이트가 본문 대비·절제를 강제한다(미적 자유는 장식 면에만).
++> **도메인 ↔ 미적 방향 기본 매핑**(`${CLAUDE_PLUGIN_ROOT}/references/aesthetic-directions.md` §9): 웹앱→★soft-modern(인접 technical·minimal) / 분석보고서→★editorial(soft-modern·technical) / C레벨→★luxury(editorial·minimal) / PPT→★editorial-bold(luxury·brutalist) / Python 웹앱→★soft-modern(인접 technical) / 기타→확정 질문 먼저. ★는 디폴트 제안일 뿐 **모든 도메인에서 대담한 방향이 1급 옵션**이다. 사용자가 격식 도메인에서 대담한 방향을 골라도 §7 게이트는 **본문 텍스트·UI·의미색 대비(APCA AND WCAG)와 reduced-motion 폴백만** 성역으로 강제한다 — 색·그라데이션·모션의 대담함은 제약하지 않는다.
+ 
+ > **§4.6 주 — Python 웹앱 운영 경로 (신규/개선 양분)**: ⓐ **신규 제작**이면 단계 2~5는 동일(art brief·샘플·토큰 정규화)하되, 단계 6에서 `tokens.css` 대신 **프레임워크 테마 산출물**(`​.streamlit/config.toml`·`theme.py`·`assets/custom.css`·`templates/*.html`)로 토큰을 매핑한다. ⓑ **기존 앱 개선**이면 → ①대상 앱을 Read로 읽어 프레임워크·현재 테마·위젯 사용을 파악 → ②art brief로 목표 룩 합의(단계 1~2) → ③**단일 `styles.css`/테마 객체 1회 주입**으로 룩만 바꾸고 **파이썬 로직·데이터 흐름은 불변** → ④§9-10 원본 보존(`_legacy/`) → ⑤§7 무결성 게이트는 *렌더된 화면 기준*으로 적용(위젯 기본 대비·키보드·CVD 점검; 무빌드 더블클릭 항목만 면제). 산출물·검증요약은 "테마 파일 + 적용법 + 신호등"으로 보고한다(index.html 핸드오프 아님).
+ 
+ ---
+ 
+ ## 5. 런타임 오케스트레이션
+ 
+ > 이 §5가 **오케스트레이션 절차의 유일 정본(SSOT)**이다. `agents/design-lead-pro.md §5`·`agents/design-redteam-pro.md §3·§5`는 본 §5를 **참조만 하고 절차를 재기술하지 않으며**, 충돌하면 **본 §5가 우선**한다. 종료 임계는 **3회로 통일**(자동보정 max_retries 3과 일치).
+ >
+ > **모드는 둘뿐 — {경량(light) / 본격(full)}.** 산출 규모가 아니라 **객관 조건**으로 가른다. **full** ⇐ 다음 중 하나라도면: 실데이터 투입·동적 DOM·웹앱 인터랙티브 8상태·데이터정직성(축잘림·문화색)·C레벨 도메인·큰 표면(다중 섹션·다중 차트·발표 덱). **light** ⇐ 위 어느 것도 아니고 **단일~소수 화면·정적·예시데이터**(랜딩 한 장·카드·단순 안내처럼 표면이 작은 일). **분류가 애매하면 full로 상향**한다(차트가 있는데 '축 0 시작 AND 문화색 중립'을 적극 확신 못 하면 데이터정직성 신호로 보고 full — 판단형 신호 미탐 방지). 작고 안전한 일만 **light가 자동 디폴트**다. 분류는 산출자(메인 세션/lead)가 하고, **full이면 redteam이 재검증**, **light면 산출자가 자가 1패스**로 점검한다(아래 §5.1).
+@@ -267,21 +267,21 @@ allowed-tools: Read, Write, Edit, Grep, Glob, AskUserQuestion, Task, WebSearch,
+ 
+ ---
+ 
+ ## 7. 단일 무결성 게이트 (Single Integrity Gate — BLOCK · skip 불가)
+ 
+ > 산출 직전, 아래 **네 검증을 하나의 '디자인 시스템 무결성 리포트'로 통합**한다. 하나라도 위반(BLOCK)이면 **교체 후 재산출**, skip 불가. dev-only 도구는 검증 시점에만 주입하고 사용자 폴더 미포함.
+ >
+ > **전수 체크 기준표 = `${CLAUDE_PLUGIN_ROOT}/references/_block-card.md`**(하드 게이트 1페이지). 아래 네 검증의 BLOCK 항목이 영역 A~G로 카드에 압축돼 있다 — 산출 직전 카드를 위에서 아래로 훑고, 상세 보정법이 필요한 항목만 깊은 references를 Read한다.
+ 
+ ### 7.1 네 검증 (독립 병렬 후 단일 리포트 통합)
+-1. **anti-slop 9항목** (`${CLAUDE_PLUGIN_ROOT}/references/anti-slop-checklist.md`): 보라 그라데이션 on 화이트 / Inter·Roboto·system 기본폰트 방치 / 균등 3카드 그리드 / 의미없는 이모지 아이콘 / 가운데정렬 hero+제네릭 일러스트 / 톤 없는 회색 박스 / accent 3개+ 남발(60-30-10 위반) / 명사구 차트 제목 / 무의미 통통 모션. **하나라도 걸리면 교체 후 9개 전부 재점검.**
++1. **anti-slop 품질 항목** (`${CLAUDE_PLUGIN_ROOT}/references/anti-slop-checklist.md`): Inter·Roboto·system 기본폰트 방치(A2) / 균등 3카드 그리드(A3) / 의미없는 이모지 아이콘(A4) / 가운데정렬 hero+제네릭 일러스트(A5) / 톤 없는 회색 박스(A6) / 명사구 차트 제목(A8) / 장식 모션의 reduced-motion 폴백 누락(A9). **A1 그라데이션·A7 accent 다색·A9 장식 모션 길이·루프는 완화돼 BLOCK 아님(화려함 허용)**. 걸리면 교체 후 전부 재점검.
+ 2. **토큰 lint** (`${CLAUDE_PLUGIN_ROOT}/references/token-system.md` §8 `token-lint.js`): dangling(끊긴 참조)·순환·고아·하드코딩 hex/px·a11y 1급 토큰 누락. BLOCK 1건이라도 있으면 출고 금지.
+ 3. **대비 — APCA AND WCAG** (`${CLAUDE_PLUGIN_ROOT}/references/color-token-contract.md` §3 / `${CLAUDE_PLUGIN_ROOT}/references/a11y-checklist.md` §1): 본문 **Lc≥75 AND 4.5:1**, 보조 Lc≥60, 대형/UI Lc≥45 AND 3:1, 비활성 Lc≥30. 하나라도 미달 → 자동 보정(명도 한 단계 이동) 후 재측정.
+ 4. **axe + CVD** (`${CLAUDE_PLUGIN_ROOT}/references/a11y-checklist.md` §8 / `${CLAUDE_PLUGIN_ROOT}/references/color-token-contract.md` §7): axe-core 실측(BLOCK 0건까지) + CVD 3종(적·녹·청) 시뮬레이션. 의미색·차트색이 색 외 신호(직접라벨·명도·아이콘)로도 구분되는지.
+ 
+ > **게이트 실행 경로 = `${CLAUDE_PLUGIN_ROOT}/tools/_audit.html`(무빌드 in-browser 감사기)**. 위 2·3·4를 **한 화면에서 실제로 측정**하는 dev-only 도구다(라이브러리 0개·Node/axe 설치 불요·더블클릭만). 산출물(또는 `tokens.css`)을 iframe으로 로드 → `getComputedStyle`로 실제 깔린 전경/배경 쌍을 추출해 APCA AND WCAG 재측정 → `tokens.css` 텍스트에 lint → CVD 3종 토글, 모두 **pass/fail 표**로 낸다. "측정 없는 통과 금지" 원칙을 런타임에서 실제로 강제하는 1순위 수단이다. → 운영은 §7.2.
+ > **색 정규화 주의(OKLCH)**: 이 플러그인은 OKLCH-우선이라 `getComputedStyle`이 색을 `oklch(...)`로 반환한다(Chrome). `_audit.html`은 정규식 파싱이 아니라 **1×1 캔버스 픽셀 readback**으로 색을 sRGB로 환산하므로 oklch/oklab/color()/hsl/named/hex/rgb를 모두 처리한다(file:// 직접 열기 시 iframe 동일출처 제약이 있으면 `python -m http.server`로 띄워라). file:// 더블클릭은 헤드리스 자동화에선 제약이 있어도 사람 사용자에겐 동작.
+ 
+ ### 7.2 게이트 실행 경로 & dev-only 도구 fallback 사다리 (WSL2/Windows 미설치 대비)
+ | 환경 | 1순위 | 누락 시 fallback |
+ |------|-------|------------------|
+@@ -348,21 +348,21 @@ Python 분기는 위 트리 대신 **프레임워크 테마 산출물**로 인
+ 
+ ---
+ 
+ ## 9. Guardrails (가드레일 — 어기면 출고 금지)
+ 
+ 1. **무빌드 더블클릭**: `npm run`·vite·next dev·번들러·트랜스파일 전제 금지. `index.html` `file://`로 열려야 함. **예외 — 도메인 4.6(Python 웹앱)**: Streamlit/Gradio/Dash/FastAPI는 파이썬 서버 런타임이 전제라 이 항목만 면제된다(단, 빌드 단계 추가·번들러 도입은 여전히 금지 — 테마/CSS 주입만으로 끝낸다).
+ 2. **raw hex/px 직접 박기 금지**: semantic/component 영역의 색·간격은 토큰(`var()`)으로만. 토큰 lint BLOCK 대상.
+ 3. **HSL lightness로 색 단계 만들기 금지**: 램프·다크·대비는 OKLCH의 L로만. 최종 CSS에 `hsl(... L%)` 디자인 토큰 0개.
+ 4. **대비 성역 침범 금지**: 텍스트·UI·의미색은 APCA AND WCAG 이중 게이트 통과 필수. "장식이라서 노랑 위 흰 글씨"는 BLOCK(텍스트 올라오면 성역 복귀).
+ 5. **데이터 왜곡 금지**: 막대는 0 시작, 축 잘림·문화적 색 의미는 사용자 명시 동의 시에만. 차트는 명사구 금지·결론형 takeaway title 강제.
+-6. **모션 예산 초과 금지**: 진입 1회·≤250ms·`prefers-reduced-motion`에서 0. 무한 통통 모션·`transition: all` 금지.
++6. **reduced-motion 폴백 필수(성역)**: 장식 모션(스크롤리빌·카운트업·패럴랙스·앰비언트 루프)은 **길이·루프 제한 없이 허용**한다(화려함). 기능 UI 피드백은 120/200ms 기본값 권장. **단 `@media (prefers-reduced-motion: reduce)`에서 모션 0(또는 무해) 폴백은 필수** — 누락 시 출고 금지(BLOCK).
+ 7. **한국어 깨짐 금지**: Pretendard 1순위 + system-ui 폴백, `word-break:keep-all`, `line-height ≥1.6`. CDN 단독 폰트 의존 금지.
+ 8. **mandatory_review 우회 금지**: 영구 산출 시 §7 게이트 skip 불가, BLOCK 존재 시 lead가 출고 거부.
+ 9. **사용자 대면 용어 금지어**: OKLCH·APCA·WCAG·Lc·hex·토큰·reference/semantic·importmap·LCP/CLS/INP·axe는 질문·시안설명·신호등·보고 본문에 단독 노출 금지(편집 가이드의 파일명 `tokens.css`·변수명만 예외).
+ 10. **원본 보존**: 기존 자산을 고치는 작업이면 원본을 삭제하지 않고 `_legacy/` 또는 별도 사본으로 보존한다.
+ 
+ ---
+ 
+ ## 10. Session Recovery (세션 재개)
+ 
+ > 워크플로우 진행 중 세션이 중단되면, 다음 세션 시작 시 메인 세션은 **먼저 `{결과폴더}/.fdp/audit-state.json`의 `gate_status`를 1순위로 확인**하고, 없으면 **결과 폴더의 마지막 산출물 파일**로 단계를 추정한다. 사용자에게 "계속/새로 시작"을 확인한 뒤 해당 단계부터 재개한다. **파일이 존재해도 `gate_status`가 `PASS`가 아니면 그 산출물은 미완(감사 미통과)으로 간주**한다 — 파일 존재 ≠ 검증 통과(감사 안 된 산출물을 완성으로 오판하지 않는다).
